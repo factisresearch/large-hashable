@@ -1,0 +1,6 @@
+- LargeHashable instances for common Haskell types
+- Travis-CI integration
+- TemplateHaskell for automatically deriving LargeHashable instances
+- Support for SHA256 and SHA512, maybe also for more hashing algorithms
+- Performance tuning
+- Documentation

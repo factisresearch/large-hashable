@@ -1,0 +1,55 @@
+name:                large-hashable
+version:             0.1.0.0
+synopsis:            Initial project template from stack
+description:         Please see README.md
+homepage:            http://github.com/githubuser/large-hashable#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2010 Author Here
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:  cbits/md5.h
+
+library
+  hs-source-dirs:      src
+  c-sources:           cbits/md5.c
+  exposed-modules:     Data.LargeHashable, Data.LargeHashable.Class, Data.LargeHashable.MD5, Data.LargeHashable.Intern
+  build-depends:       base >= 4.7 && < 5, text, bytestring, transformers, base16-bytestring
+  default-language:    Haskell2010
+  ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds
+                       -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
+                       -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
+                       -fwarn-missing-signatures
+
+executable large-hashable-benchmark
+  hs-source-dirs:      benchmark
+  main-is:             Main.hs
+  other-modules:       Data.LargeHashable.Benchmarks.CryptoHash,
+                       Data.LargeHashable.Benchmarks.Main
+  ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
+                       -Werror -W -fwarn-unused-imports -fwarn-unused-binds
+                       -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
+                       -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
+                       -fwarn-missing-signatures
+  build-depends:       base, large-hashable, safecopy, text, deepseq, cryptohash, bytestring,
+                       cereal, byteable, transformers
+  default-language:    Haskell2010
+
+test-suite large-hashable-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Main.hs
+  build-depends:       base, large-hashable, HTF, text
+  ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
+                       -Werror -W -fwarn-unused-imports -fwarn-unused-binds
+                       -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
+                       -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
+                       -fwarn-missing-signatures
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/githubuser/large-hashable
