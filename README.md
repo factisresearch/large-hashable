@@ -1,5 +1,7 @@
 # LargeHashable
 
+[![Build Status](https://travis-ci.org/factisresearch/large-hashable.svg?branch=master)](https://travis-ci.org/factisresearch/large-hashable)
+
 Efficiently hash Haskell values with MD5, SHA256, SHA512 and other
 hashing algorithms.
 
