@@ -1,3 +1,4 @@
+-- | This module defines the central type class `LargeHashable` of this package.
 {-# LANGUAGE BangPatterns #-}
 module Data.LargeHashable.Class (
 
@@ -10,6 +11,14 @@ import Foreign.Ptr
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
 
+-- | A type class for computing large hashes (i.e. MD5, SHA256, ...) from
+-- haskell values.
+--
+-- Important: when implementing `LargeHashable` for your custom datatype,
+-- make sure to hash all information present in the datatype. Otherwise,
+-- unncessary hash collisions arise. A rule of thumb: hash all
+-- information that you would also need for serializing/deserializing
+-- values of your datatype.
 class LargeHashable a where
     updateHash :: a -> LH ()
 

@@ -24,6 +24,7 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ByteString.Base16 as Base16
 
+-- | A newtype-wrapper for hash values.
 newtype Hash = Hash { unHash :: BS.ByteString }
     deriving (Eq)
 
