@@ -1,4 +1,7 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE FlexibleContexts  #-}
 module Data.LargeHashable.Class (
 
     LargeHashable(..), largeHash
@@ -13,11 +16,14 @@ import Data.Word
 import Data.Int
 import Data.Bits
 import Data.Ratio
+import GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
 
 class LargeHashable a where
     updateHash :: a -> LH ()
+    default updateHash :: (LargeHashable' (Rep a), Generic a) => a -> LH ()
+    updateHash = updateHash' . from
 
 largeHash :: LargeHashable a => HashAlgorithm -> a -> Hash
 largeHash algo x = runLH algo (updateHash x)
@@ -149,3 +155,30 @@ instance (Integral a, LargeHashable a) => LargeHashable (Ratio a) where
     updateHash !i = do
         updateHash $ numerator i
         updateHash $ denominator i
+
+class LargeHashable' f where
+    updateHash' :: f p -> LH ()
+
+instance LargeHashable' V1 where
+    updateHash' = undefined
+
+instance LargeHashable' U1 where
+    updateHash' _ = updateHash ()
+
+instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :+: g) where
+    updateHash' (L1 x) = do
+        updateHash (0 :: Int) -- is left
+        updateHash' x
+    updateHash' (R1 x) = do
+        updateHash (1 :: Int) -- is right
+        updateHash' x
+
+instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :*: g) where
+    updateHash' (x :*: y) = updateHash' x >> updateHash' y
+
+instance LargeHashable c => LargeHashable' (K1 i c) where
+    updateHash' (K1 x) = updateHash x
+
+-- ignore meta-info (for now)
+instance (LargeHashable' f) => LargeHashable' (M1 i t f) where
+      updateHash' (M1 x) = updateHash' x
