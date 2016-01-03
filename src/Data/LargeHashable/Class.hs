@@ -12,6 +12,7 @@ import Foreign.Marshal.Array
 import Data.Word
 import Data.Int
 import Data.Bits
+import Data.Ratio
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
 
@@ -135,3 +136,16 @@ updateHashMaybe !(Just !x) = do
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
+
+instance LargeHashable () where
+    updateHash () = updateHash (0 :: Int)
+
+instance LargeHashable Ordering where
+    updateHash EQ = updateHash (0  :: Int)
+    updateHash GT = updateHash (-1 :: Int)
+    updateHash LT = updateHash (1  :: Int)
+
+instance (Integral a, LargeHashable a) => LargeHashable (Ratio a) where
+    updateHash !i = do
+        updateHash $ numerator i
+        updateHash $ denominator i
