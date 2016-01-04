@@ -3,3 +3,7 @@
 - Support for SHA256 and SHA512, maybe also for more hashing algorithms
 - Performance tuning
 - Documentation
+
+Minor:
+- Find possible memory leaks (due to the newArray maybe?)
+- Update benchmark
