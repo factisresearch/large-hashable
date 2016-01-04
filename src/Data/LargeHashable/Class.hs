@@ -126,7 +126,6 @@ instance LargeHashable a => LargeHashable [a] where
 {-# INLINE updateHashTuple #-}
 updateHashTuple :: (LargeHashable a, LargeHashable b) => (a, b) -> LH ()
 updateHashTuple (!a, !b) = do
-    updateHash (2 :: Int) -- TODO: Necessary?
     updateHash a
     updateHash b
 
