@@ -1,7 +1,7 @@
 module Data.LargeHashable.Tests.Helper where
 
 import Control.Monad
-import Test.Framework
+import Test.QuickCheck
 import qualified Data.Text as T
 
 instance Arbitrary T.Text where

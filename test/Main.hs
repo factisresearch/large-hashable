@@ -1,13 +1,10 @@
-{-# OPTIONS_GHC -F -pgmF htfpp #-}
 module Main where
 
-import Test.Framework
+import Test.Tasty
+import Data.LargeHashable.Tests.Class
 
-{- In Emacs sort block with M-x sort-lines #-}
-import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.Class
-
-allTests :: [TestSuite]
-allTests = htf_importedTests
+allTests :: TestTree
+allTests = testGroup "All Tests" [ appendProperties ]
 
 main :: IO ()
-main = htfMain allTests
+main = defaultMain allTests
