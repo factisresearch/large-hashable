@@ -4,7 +4,7 @@ import Test.Tasty
 import Data.LargeHashable.Tests.Class
 
 allTests :: TestTree
-allTests = testGroup "All Tests" [ appendProperties ]
+allTests = testGroup "All Tests" [appendProperties, uniquenessProperties]
 
 main :: IO ()
 main = defaultMain allTests
