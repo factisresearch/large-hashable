@@ -11,7 +11,6 @@ module Data.LargeHashable.Class (
 import Data.LargeHashable.Intern
 import Data.Char (ord)
 import Foreign.Ptr
-import Foreign.Marshal.Array
 import Data.Word
 import Data.Int
 import Data.Bits
@@ -83,20 +82,18 @@ instance LargeHashable Word64 where
 instance LargeHashable Char where
     -- TODO: ord can't be used for 100% of unicode
     --       characters since it uses int.
-    --       We could remove this limitation trough
+    --       We could remove this limitation through
     --       a dependency to utf8-light.
     updateHash = updateHash . ord
 
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()
-updateHashInteger !i = do
-    updates <- hashUpdates
-    array <- ioInLH . newArray $ splitted
-    ioInLH $ hu_updatePtr updates array (length splitted)
-    where split :: Integer -> [Word8]
+updateHashInteger !i = mapM_ updateHash $ split i
+    where split :: Integer -> [Word64]
           split 0 = []
-          split i = fromIntegral (i .&. 0xff) : split (shift i (-8))
-          splitted = split i
+          split i = if i > 0
+                      then fromIntegral (i .&. 0xffffffffffffffff) : split (shift i (-64))
+                      else 0 : split (abs i)
 
 instance LargeHashable Integer where
     updateHash = updateHashInteger
