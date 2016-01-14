@@ -10,6 +10,7 @@ module Data.LargeHashable.Class (
 
 import Data.LargeHashable.Intern
 import Data.Char (ord)
+import Foreign.C.Types
 import Foreign.Ptr
 import Data.Word
 import Data.Int
@@ -43,7 +44,6 @@ instance LargeHashable T.Text where
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
 --       equal to CULong's bounds
--- Eval: Omit a compile time warning if that is not the case?
 updateHashBoundedIntegral :: (Bounded a, Integral a) => a -> LH ()
 updateHashBoundedIntegral !i = do
     updates <- hashUpdates
@@ -77,7 +77,7 @@ instance LargeHashable Word32 where
     updateHash = updateHashBoundedIntegral
 
 instance LargeHashable Word64 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHash . CULong
 
 instance LargeHashable Char where
     -- TODO: ord can't be used for 100% of unicode
@@ -86,6 +86,9 @@ instance LargeHashable Char where
     --       a dependency to utf8-light.
     updateHash = updateHash . ord
 
+instance LargeHashable CULong where
+    updateHash l = hashUpdates >>= \hu -> ioInLH $ hu_updateULong hu l
+
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()
 updateHashInteger !i = mapM_ updateHash $ split i
@@ -93,7 +96,7 @@ updateHashInteger !i = mapM_ updateHash $ split i
           split 0 = []
           split i = if i > 0
                       then fromIntegral (i .&. 0xffffffffffffffff) : split (shift i (-64))
-                      else 0 : split (abs i)
+                      else 0 : split (abs i) -- prepend 0 to show it is negative
 
 instance LargeHashable Integer where
     updateHash = updateHashInteger
