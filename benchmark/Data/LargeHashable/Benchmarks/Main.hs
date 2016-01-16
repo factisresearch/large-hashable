@@ -14,6 +14,7 @@ import System.Environment
 import System.Exit
 import qualified Data.LargeHashable.Benchmarks.CryptoHash as CH
 import qualified Data.LargeHashable as LH
+import qualified Data.Bytes.Serial as S
 
 data Patient
     = Patient
@@ -25,6 +26,8 @@ data Patient
     deriving (Eq, Show, NFData, Generic)
 
 $(deriveSafeCopy 0 'base ''Patient)
+
+instance S.Serial Patient
 
 instance CH.LargeHashable Patient where
     hashUpdate ctx0 p =
@@ -88,6 +91,13 @@ hashLargeHashable =
        let !hash = LH.largeHash LH.md5HashAlgorithm l
        putStrLn ("Hash: " ++ show hash)
 
+hashSerial :: IO ()
+hashSerial =
+    do let !l = patList
+       putStrLn ("Generated " ++ show (length l) ++ " patients")
+       let !hash = LH.serialLargeHash LH.md5HashAlgorithm l
+       putStrLn ("Hash: " ++ show hash)
+
 main :: IO ()
 main =
     do args <- getArgs
@@ -96,6 +106,7 @@ main =
          ["safecopy"] -> hashSafeCopy
          ["cryptohash"] ->  hashCryptoHash
          ["large-hashable"] -> hashLargeHashable
+         ["serial"] -> hashSerial
          _ ->
              do putStrLn ("invalid arguments: " ++ show args)
                 exitWith (ExitFailure 1)

@@ -6,6 +6,7 @@ import Test.QuickCheck
 import qualified Data.Text as T
 import GHC.Generics
 import Data.LargeHashable
+import Data.Bytes.Serial
 
 instance Arbitrary T.Text where
     arbitrary = liftM T.pack arbitrary
@@ -23,6 +24,7 @@ data TestA
     } deriving (Generic, Eq, Show)
 
 instance LargeHashable TestA
+instance Serial TestA
 
 instance Arbitrary TestA where
     arbitrary = TestA <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
