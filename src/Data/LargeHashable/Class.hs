@@ -103,8 +103,8 @@ instance LargeHashable Integer where
 
 {-# INLINE updateHashBool #-}
 updateHashBool :: Bool -> LH ()
-updateHashBool !True  = updateHash (1 :: Int)
-updateHashBool !False = updateHash (0 :: Int)
+updateHashBool !True  = updateHash (1 :: CULong)
+updateHashBool !False = updateHash (0 :: CULong)
 
 instance LargeHashable Bool where
     updateHash = updateHashBool
@@ -134,21 +134,21 @@ instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
 
 {-# INLINE updateHashMaybe #-}
 updateHashMaybe :: LargeHashable a => Maybe a -> LH ()
-updateHashMaybe !Nothing   = updateHash (0 :: Int)
+updateHashMaybe !Nothing   = updateHash (0 :: CULong)
 updateHashMaybe !(Just !x) = do
-    updateHash (1 :: Int)
+    updateHash (1 :: CULong)
     updateHash x
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
 
 instance LargeHashable () where
-    updateHash () = updateHash (0 :: Int)
+    updateHash () = updateHash (0 :: CULong)
 
 instance LargeHashable Ordering where
-    updateHash EQ = updateHash (0  :: Int)
-    updateHash GT = updateHash (-1 :: Int)
-    updateHash LT = updateHash (1  :: Int)
+    updateHash EQ = updateHash (0  :: CULong)
+    updateHash GT = updateHash (-1 :: CULong)
+    updateHash LT = updateHash (1  :: CULong)
 
 instance (Integral a, LargeHashable a) => LargeHashable (Ratio a) where
     updateHash !i = do
@@ -166,10 +166,10 @@ instance LargeHashable' U1 where
 
 instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :+: g) where
     updateHash' (L1 x) = do
-        updateHash (0 :: Int) -- is left
+        updateHash (0 :: CULong) -- is left
         updateHash' x
     updateHash' (R1 x) = do
-        updateHash (1 :: Int) -- is right
+        updateHash (1 :: CULong) -- is right
         updateHash' x
 
 instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :*: g) where
