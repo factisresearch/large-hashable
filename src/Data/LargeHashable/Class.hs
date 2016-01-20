@@ -19,6 +19,8 @@ import Data.Ratio
 import GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 
 class LargeHashable a where
     updateHash :: a -> LH ()
@@ -40,6 +42,23 @@ updateHashText !t = do
 
 instance LargeHashable T.Text where
     updateHash = updateHashText
+
+{-# INLINE updateHashByteString #-}
+updateHashByteString :: B.ByteString -> LH ()
+updateHashByteString !b = do
+    updates <- hashUpdates
+    ioInLH $ do
+        ptr <- B.useAsCString b return
+        let length = B.length b
+        hu_updateULong updates (fromIntegral length)
+        hu_updatePtr updates (castPtr ptr)  length
+
+instance LargeHashable B.ByteString where
+    updateHash = updateHashByteString
+
+instance LargeHashable BL.ByteString where
+    -- TODO: Optimize
+    updateHash = BL.foldl (\m w -> m >> updateHash w) (return ())
 
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
