@@ -7,6 +7,7 @@ import Data.LargeHashable
 import Data.LargeHashable.MD5
 import Data.LargeHashable.Tests.Helper
 import qualified Data.Text as T
+import Data.ByteString (ByteString ())
 
 prop_appendTextOk :: T.Text -> T.Text -> Bool
 prop_appendTextOk t1 t2 =
@@ -34,3 +35,6 @@ prop_intUniqueness = generic_uniquenessProp
 
 prop_wordUniqueness :: Word -> Word -> Bool
 prop_wordUniqueness = generic_uniquenessProp
+
+prop_bytestringUniqueness :: ByteString -> ByteString -> Bool
+prop_bytestringUniqueness = generic_uniquenessProp
