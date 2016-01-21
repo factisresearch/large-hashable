@@ -110,12 +110,14 @@ instance LargeHashable CULong where
 
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()
-updateHashInteger !i = mapM_ updateHash $ split i
-    where split :: Integer -> [Word64]
-          split 0 = []
-          split i = if i > 0
-                      then fromIntegral (i .&. 0xffffffffffffffff) : split (shift i (-64))
-                      else 0 : split (abs i) -- prepend 0 to show it is negative
+updateHashInteger !i
+    | i == 0 = updateHash (0 :: CULong)
+    | i > 0  = do
+        updateHash (fromIntegral (i .&. 0xffffffffffffffff) :: CULong)
+        updateHashInteger (shift i (-64))
+    | otherwise = do
+        updateHash (0 :: CULong) -- prepend 0 to show it is negative
+        updateHashInteger (abs i)
 
 instance LargeHashable Integer where
     updateHash = updateHashInteger
