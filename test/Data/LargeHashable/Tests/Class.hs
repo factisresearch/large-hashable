@@ -7,7 +7,8 @@ import Data.LargeHashable
 import Data.LargeHashable.MD5
 import Data.LargeHashable.Tests.Helper
 import qualified Data.Text as T
-import Data.ByteString (ByteString ())
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 
 prop_appendTextOk :: T.Text -> T.Text -> Bool
 prop_appendTextOk t1 t2 =
@@ -18,6 +19,16 @@ prop_appendListOk :: [Int] -> [Int] -> Bool
 prop_appendListOk l1 l2 =
     runMD5 (updateHash (l1 ++ l2)) /=
     runMD5 (updateHash l1 >> updateHash l2)
+
+prop_appendByteStringOk :: B.ByteString -> B.ByteString -> Bool
+prop_appendByteStringOk b1 b2 =
+    runMD5 (updateHash (b1 `B.append` b2)) /=
+    runMD5 (updateHash b1 >> updateHash b2)
+
+prop_appendLazyByteStringOk :: BL.ByteString -> BL.ByteString -> Bool
+prop_appendLazyByteStringOk b1 b2 =
+    runMD5 (updateHash (b1 `BL.append` b2)) /=
+    runMD5 (updateHash b1 >> updateHash b2)
 
 -- of course we can't fully prove uniqueness using
 -- properties and there is a small chance of collisions
@@ -36,5 +47,8 @@ prop_intUniqueness = generic_uniquenessProp
 prop_wordUniqueness :: Word -> Word -> Bool
 prop_wordUniqueness = generic_uniquenessProp
 
-prop_bytestringUniqueness :: ByteString -> ByteString -> Bool
+prop_bytestringUniqueness :: B.ByteString -> B.ByteString -> Bool
 prop_bytestringUniqueness = generic_uniquenessProp
+
+prop_lazyBytestringUniqueness :: BL.ByteString -> BL.ByteString -> Bool
+prop_lazyBytestringUniqueness = generic_uniquenessProp

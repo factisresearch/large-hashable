@@ -21,6 +21,8 @@ import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Internal as BLI
+
 
 class LargeHashable a where
     updateHash :: a -> LH ()
@@ -57,8 +59,8 @@ instance LargeHashable B.ByteString where
     updateHash = updateHashByteString
 
 instance LargeHashable BL.ByteString where
-    -- TODO: Optimize
-    updateHash = BL.foldl (\m w -> m >> updateHash w) (return ())
+    updateHash (BLI.Chunk bs next) = updateHash (B.length bs) >> updateHash bs >> updateHash next
+    updateHash BLI.Empty = updateHash (0 :: CULong)
 
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
@@ -146,9 +148,7 @@ instance LargeHashable a => LargeHashable [a] where
 
 {-# INLINE updateHashTuple #-}
 updateHashTuple :: (LargeHashable a, LargeHashable b) => (a, b) -> LH ()
-updateHashTuple (!a, !b) = do
-    updateHash a
-    updateHash b
+updateHashTuple (!a, !b) = updateHash a >> updateHash b
 
 instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
     updateHash = updateHashTuple
@@ -156,9 +156,7 @@ instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
 {-# INLINE updateHashMaybe #-}
 updateHashMaybe :: LargeHashable a => Maybe a -> LH ()
 updateHashMaybe !Nothing   = updateHash (0 :: CULong)
-updateHashMaybe !(Just !x) = do
-    updateHash (1 :: CULong)
-    updateHash x
+updateHashMaybe !(Just !x) = updateHash (1 :: CULong) >> updateHash x
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
