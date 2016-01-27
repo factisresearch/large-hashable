@@ -19,6 +19,10 @@ import Data.Ratio
 import GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Internal as BLI
+
 
 class LargeHashable a where
     updateHash :: a -> LH ()
@@ -40,6 +44,23 @@ updateHashText !t = do
 
 instance LargeHashable T.Text where
     updateHash = updateHashText
+
+{-# INLINE updateHashByteString #-}
+updateHashByteString :: B.ByteString -> LH ()
+updateHashByteString !b = do
+    updates <- hashUpdates
+    ioInLH $ do
+        ptr <- B.useAsCString b return
+        let length = B.length b
+        hu_updateULong updates (fromIntegral length)
+        hu_updatePtr updates (castPtr ptr)  length
+
+instance LargeHashable B.ByteString where
+    updateHash = updateHashByteString
+
+instance LargeHashable BL.ByteString where
+    updateHash (BLI.Chunk bs next) = updateHash (B.length bs) >> updateHash bs >> updateHash next
+    updateHash BLI.Empty = updateHash (0 :: CULong)
 
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
@@ -91,20 +112,22 @@ instance LargeHashable CULong where
 
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()
-updateHashInteger !i = mapM_ updateHash $ split i
-    where split :: Integer -> [Word64]
-          split 0 = []
-          split i = if i > 0
-                      then fromIntegral (i .&. 0xffffffffffffffff) : split (shift i (-64))
-                      else 0 : split (abs i) -- prepend 0 to show it is negative
+updateHashInteger !i
+    | i == 0 = updateHash (0 :: CULong)
+    | i > 0  = do
+        updateHash (fromIntegral (i .&. 0xffffffffffffffff) :: CULong)
+        updateHashInteger (shift i (-64))
+    | otherwise = do
+        updateHash (0 :: CULong) -- prepend 0 to show it is negative
+        updateHashInteger (abs i)
 
 instance LargeHashable Integer where
     updateHash = updateHashInteger
 
 {-# INLINE updateHashBool #-}
 updateHashBool :: Bool -> LH ()
-updateHashBool !True  = updateHash (1 :: Int)
-updateHashBool !False = updateHash (0 :: Int)
+updateHashBool !True  = updateHash (1 :: CULong)
+updateHashBool !False = updateHash (0 :: CULong)
 
 instance LargeHashable Bool where
     updateHash = updateHashBool
@@ -125,30 +148,26 @@ instance LargeHashable a => LargeHashable [a] where
 
 {-# INLINE updateHashTuple #-}
 updateHashTuple :: (LargeHashable a, LargeHashable b) => (a, b) -> LH ()
-updateHashTuple (!a, !b) = do
-    updateHash a
-    updateHash b
+updateHashTuple (!a, !b) = updateHash a >> updateHash b
 
 instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
     updateHash = updateHashTuple
 
 {-# INLINE updateHashMaybe #-}
 updateHashMaybe :: LargeHashable a => Maybe a -> LH ()
-updateHashMaybe !Nothing   = updateHash (0 :: Int)
-updateHashMaybe !(Just !x) = do
-    updateHash (1 :: Int)
-    updateHash x
+updateHashMaybe !Nothing   = updateHash (0 :: CULong)
+updateHashMaybe !(Just !x) = updateHash (1 :: CULong) >> updateHash x
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
 
 instance LargeHashable () where
-    updateHash () = updateHash (0 :: Int)
+    updateHash () = updateHash (0 :: CULong)
 
 instance LargeHashable Ordering where
-    updateHash EQ = updateHash (0  :: Int)
-    updateHash GT = updateHash (-1 :: Int)
-    updateHash LT = updateHash (1  :: Int)
+    updateHash EQ = updateHash (0  :: CULong)
+    updateHash GT = updateHash (-1 :: CULong)
+    updateHash LT = updateHash (1  :: CULong)
 
 instance (Integral a, LargeHashable a) => LargeHashable (Ratio a) where
     updateHash !i = do
@@ -166,10 +185,10 @@ instance LargeHashable' U1 where
 
 instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :+: g) where
     updateHash' (L1 x) = do
-        updateHash (0 :: Int) -- is left
+        updateHash (0 :: CULong) -- is left
         updateHash' x
     updateHash' (R1 x) = do
-        updateHash (1 :: Int) -- is right
+        updateHash (1 :: CULong) -- is right
         updateHash' x
 
 instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :*: g) where

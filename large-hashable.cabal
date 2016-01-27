@@ -43,7 +43,8 @@ test-suite large-hashable-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
-  build-depends:       base, large-hashable, HTF, tasty-quickcheck, QuickCheck, text, bytes
+  build-depends:       base, large-hashable, HTF, tasty-quickcheck, QuickCheck, text, bytes,
+                       bytestring
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
