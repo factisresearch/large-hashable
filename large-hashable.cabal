@@ -17,7 +17,8 @@ library
   hs-source-dirs:      src
   c-sources:           cbits/md5.c
   exposed-modules:     Data.LargeHashable, Data.LargeHashable.Class, Data.LargeHashable.MD5, Data.LargeHashable.Intern
-  build-depends:       base >= 4.7 && < 5, text, bytestring, transformers, base16-bytestring
+                     , Data.LargeHashable.Serial
+  build-depends:       base >= 4.7 && < 5, text, bytestring, transformers, base16-bytestring, bytes
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
@@ -35,14 +36,15 @@ executable large-hashable-benchmark
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures
   build-depends:       base, large-hashable, safecopy, text, deepseq, cryptohash, bytestring,
-                       cereal, byteable, transformers
+                       cereal, byteable, transformers, bytes
   default-language:    Haskell2010
 
 test-suite large-hashable-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
-  build-depends:       base, large-hashable, HTF, text
+  build-depends:       base, large-hashable, HTF, tasty-quickcheck, QuickCheck, text, bytes,
+                       bytestring
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
