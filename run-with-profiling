@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "USAGE: $0 BENCHMARK_NAME"
+    exit 1
+fi
+
+stack build --enable-executable-profiling --enable-library-profiling --ghc-options=-fprof-auto
+exe=$(stack exec -- which large-hashable-benchmark)
+$exe $1 +RTS -p
