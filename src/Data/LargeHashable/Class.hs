@@ -67,9 +67,15 @@ updateHashByteString !b = do
 instance LargeHashable B.ByteString where
     updateHash = updateHashByteString
 
+{-# INLINE updateHashLazyByteString #-}
+updateHashLazyByteString :: Int -> BL.ByteString -> LH ()
+updateHashLazyByteString !length !(BLI.Chunk bs next) = do
+    updateHash bs
+    updateHashLazyByteString (length + B.length bs) next
+updateHashLazyByteString !length !BLI.Empty = updateHash length
+
 instance LargeHashable BL.ByteString where
-    updateHash (BLI.Chunk bs next) = updateHash (B.length bs) >> updateHash bs >> updateHash next
-    updateHash BLI.Empty = updateHash (0 :: CULong)
+    updateHash = updateHashLazyByteString 0
 
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
