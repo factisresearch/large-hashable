@@ -21,9 +21,9 @@ instance Arbitrary B.ByteString where
         map B.pack (shrink (B.unpack t))
 
 instance Arbitrary BL.ByteString where
-    arbitrary = liftM BL.pack arbitrary
+    arbitrary = liftM BL.fromChunks arbitrary
     shrink t =
-        map BL.pack (shrink (BL.unpack t))
+        map BL.fromChunks (shrink (BL.toChunks t))
 
 data TestA
     = TestA
