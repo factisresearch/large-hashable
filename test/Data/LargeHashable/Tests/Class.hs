@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -F -pgmF htfpp #-}
 module Data.LargeHashable.Tests.Class where
 
@@ -29,6 +30,11 @@ prop_appendLazyByteStringOk :: BL.ByteString -> BL.ByteString -> Bool
 prop_appendLazyByteStringOk b1 b2 =
     runMD5 (updateHash (b1 `BL.append` b2)) /=
     runMD5 (updateHash b1 >> updateHash b2)
+
+test_irrelevantChunking :: IO ()
+test_irrelevantChunking = do
+    assertEqual (largeHash md5HashAlgorithm (BL.fromChunks ["foo", "ba", "r"]))
+                (largeHash md5HashAlgorithm (BL.fromChunks ["foob", "ar"]))
 
 -- of course we can't fully prove uniqueness using
 -- properties and there is a small chance of collisions
