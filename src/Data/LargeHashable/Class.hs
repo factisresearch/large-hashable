@@ -54,15 +54,21 @@ updateHashText !t = do
 instance LargeHashable T.Text where
     updateHash = updateHashText
 
-{-# INLINE updateHashByteString #-}
-updateHashByteString :: B.ByteString -> LH ()
-updateHashByteString !b = do
+{-# INLINE updateHashByteStringData #-}
+updateHashByteStringData :: B.ByteString -> LH ()
+updateHashByteStringData !b = do
     updates <- hashUpdates
     ioInLH $ do
         ptr <- B.useAsCString b return
         let length = B.length b
-        hu_updateULong updates (fromIntegral length)
         hu_updatePtr updates (castPtr ptr)  length
+
+{-# INLINE updateHashByteString #-}
+updateHashByteString :: B.ByteString -> LH ()
+updateHashByteString !b = do
+    updateHashByteStringData b
+    updates <- hashUpdates
+    ioInLH $ hu_updateULong updates (fromIntegral (B.length b))
 
 instance LargeHashable B.ByteString where
     updateHash = updateHashByteString
@@ -70,7 +76,7 @@ instance LargeHashable B.ByteString where
 {-# INLINE updateHashLazyByteString #-}
 updateHashLazyByteString :: Int -> BL.ByteString -> LH ()
 updateHashLazyByteString !length !(BLI.Chunk bs next) = do
-    updateHash bs
+    updateHashByteStringData bs
     updateHashLazyByteString (length + B.length bs) next
 updateHashLazyByteString !length !BLI.Empty = updateHash length
 
