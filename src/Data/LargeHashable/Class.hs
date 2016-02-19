@@ -119,7 +119,7 @@ instance LargeHashable Word32 where
     updateHash = updateHashBoundedIntegral
 
 instance LargeHashable Word64 where
-    updateHash = updateHash . CULong
+    updateHash = updateHashBoundedIntegral
 
 instance LargeHashable Char where
     -- TODO: ord can't be used for 100% of unicode
