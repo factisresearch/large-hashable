@@ -58,3 +58,9 @@ prop_bytestringUniqueness = generic_uniquenessProp
 
 prop_lazyBytestringUniqueness :: BL.ByteString -> BL.ByteString -> Bool
 prop_lazyBytestringUniqueness = generic_uniquenessProp
+
+prop_DoubleUniquess :: Double -> Double -> Bool
+prop_DoubleUniquess = generic_uniquenessProp
+
+prop_FloatUniquess :: Float -> Float -> Bool
+prop_FloatUniquess = generic_uniquenessProp
