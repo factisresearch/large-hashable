@@ -16,7 +16,7 @@ extra-source-files:  cbits/md5.h
 library
   hs-source-dirs:      src
   c-sources:           cbits/md5.c
-                     , cbits/f2i.c
+--                     , cbits/f2i.c
   exposed-modules:     Data.LargeHashable
                      , Data.LargeHashable.Class
                      , Data.LargeHashable.MD5
