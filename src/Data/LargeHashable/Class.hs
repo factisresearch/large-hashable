@@ -202,13 +202,37 @@ updateHashTuple (!a, !b) = updateHash a >> updateHash b
 instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
     updateHash = updateHashTuple
 
-{-# INLINE updateHashMaybe #-}
+{-# INLINE updateHashTriple#-}
+updateHashTriple :: (LargeHashable a, LargeHashable b, LargeHashable c) => (a, b, c) -> LH ()
+updateHashTriple (a, b, c) = updateHash a >> updateHash b >> updateHash c
+
+instance (LargeHashable a, LargeHashable b, LargeHashable c) => LargeHashable (a, b, c) where
+    updateHash = updateHashTriple
+
+{-# INLINE updateHashQuadruple #-}
+updateHashQuadruple :: (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d) => (a, b, c, d) -> LH ()
+updateHashQuadruple (a, b, c, d) = updateHash a >> updateHash b >> updateHash c >> updateHash d
+
+instance (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d) => LargeHashable (a, b, c, d) where
+    updateHash = updateHashQuadruple
+
+{-# INLINE updateHashQuintuple #-}
+updateHashQuintuple :: (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d, LargeHashable e) => (a, b, c, d, e) -> LH ()
+updateHashQuintuple (a, b, c, d, e) = updateHash a >> updateHash b >> updateHash c >> updateHash d >> updateHash e
+
+instance (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d, LargeHashable e) => LargeHashable (a, b, c, d, e) where
+    updateHash = updateHashQuintuple
+
 updateHashMaybe :: LargeHashable a => Maybe a -> LH ()
 updateHashMaybe !Nothing   = updateHash (0 :: CULong)
 updateHashMaybe !(Just !x) = updateHash (1 :: CULong) >> updateHash x
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
+
+instance (LargeHashable a, LargeHashable b) => LargeHashable (Either a b) where
+    updateHash (Left !l)  = updateHash (0 :: CULong) >> updateHash l
+    updateHash (Right !r) = updateHash (1 :: CULong) >> updateHash r
 
 instance LargeHashable () where
     updateHash () = updateHash (0 :: CULong)
