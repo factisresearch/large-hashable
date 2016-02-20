@@ -11,6 +11,8 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
+import Data.Set (Set ())
+import Data.Map (Map ())
 
 prop_appendTextOk :: T.Text -> T.Text -> Bool
 prop_appendTextOk t1 t2 =
@@ -81,3 +83,9 @@ prop_DoubleUniquess = generic_uniquenessProp
 
 prop_FloatUniquess :: Float -> Float -> Bool
 prop_FloatUniquess = generic_uniquenessProp
+
+prop_setUniquess :: Set Int -> Set Int -> Bool
+prop_setUniquess = generic_uniquenessProp
+
+prop_mapUniquess :: Map Int String -> Map Int String -> Bool
+prop_mapUniquess = generic_uniquenessProp

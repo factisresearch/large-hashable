@@ -16,19 +16,19 @@ extra-source-files:  cbits/md5.h
 library
   hs-source-dirs:      src
   c-sources:           cbits/md5.c
---                     , cbits/f2i.c
   exposed-modules:     Data.LargeHashable
                      , Data.LargeHashable.Class
                      , Data.LargeHashable.MD5
                      , Data.LargeHashable.Intern
                      , Data.LargeHashable.Serial
-  build-depends:       base >= 4.7 && < 5
+  build-depends:       base
                      , text
                      , bytestring
                      , transformers
                      , base16-bytestring
                      , bytes
                      , containers
+                     , unordered-containers
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
@@ -69,6 +69,7 @@ test-suite large-hashable-test
                      , text
                      , bytes
                      , bytestring
+                     , containers
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind

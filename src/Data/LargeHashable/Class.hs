@@ -25,7 +25,12 @@ import qualified Data.Text.Internal.Lazy as TLI
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
-
+import qualified Data.Set as S
+import qualified Data.IntSet as IntSet
+import qualified Data.HashSet as HashSet
+import qualified Data.Map as M
+import qualified Data.IntMap as IntMap
+import qualified Data.HashMap.Lazy as HashMap
 
 -- | A type class for computing large hashes (i.e. MD5, SHA256, ...) from
 -- haskell values.
@@ -195,6 +200,72 @@ updateHashList = loop 0
 instance LargeHashable a => LargeHashable [a] where
     updateHash = updateHashList
 
+{-# INLINE setFoldFun #-}
+setFoldFun :: LargeHashable a => LH () -> a -> LH ()
+setFoldFun action value = action >> updateHash value
+
+{-# INLINE updateHashSet #-}
+updateHashSet :: LargeHashable a => S.Set a -> LH ()
+updateHashSet !set = do
+    foldl setFoldFun (return ()) set
+    updateHash (S.size set)
+
+instance LargeHashable a => LargeHashable (S.Set a) where
+    updateHash = updateHashSet
+
+{-# INLINE updateHashIntSet #-}
+updateHashIntSet :: IntSet.IntSet -> LH ()
+updateHashIntSet !set = do
+    IntSet.foldl setFoldFun (return ()) set
+    updateHash (IntSet.size set)
+
+-- Lazy and Strict IntSet share the same definition
+instance LargeHashable IntSet.IntSet where
+    updateHash = updateHashIntSet
+
+{-# INLINE updateHashHashSet #-}
+updateHashHashSet :: LargeHashable a => HashSet.HashSet a -> LH ()
+updateHashHashSet !set = do
+    HashSet.foldl' setFoldFun (return ()) set
+    updateHash (HashSet.size set)
+
+-- Lazy and Strict HashSet share the same definition
+instance LargeHashable a => LargeHashable (HashSet.HashSet a) where
+    updateHash = updateHashHashSet
+
+{-# INLINE mapFoldFun #-}
+mapFoldFun :: (LargeHashable k, LargeHashable a) => LH () -> k -> a -> LH ()
+mapFoldFun action key value = action >> updateHash key >> updateHash value
+
+{-# INLINE updateHashMap #-}
+updateHashMap :: (LargeHashable k, LargeHashable a) => M.Map k a -> LH ()
+updateHashMap !map = do
+        M.foldlWithKey mapFoldFun (return ()) map
+        updateHash (M.size map)
+
+-- Lazy and Strict Map share the same definition
+instance (LargeHashable k, LargeHashable a) => LargeHashable (M.Map k a) where
+    updateHash = updateHashMap
+
+{-# INLINE updateHashIntMap #-}
+updateHashIntMap :: LargeHashable a => (IntMap.IntMap a) -> LH ()
+updateHashIntMap !map = do
+    IntMap.foldlWithKey mapFoldFun (return ()) map
+    updateHash (IntMap.size map)
+
+-- Lazy and Strict IntMap share the same definition
+instance LargeHashable a => LargeHashable (IntMap.IntMap a) where
+    updateHash = updateHashIntMap
+
+updateHashHashMap :: (LargeHashable k, LargeHashable v) => HashMap.HashMap k v -> LH ()
+updateHashHashMap !map = do
+    HashMap.foldlWithKey' mapFoldFun (return ()) map
+    updateHash (HashMap.size map)
+
+-- Lazy and Strict HashMap share the same definition
+instance (LargeHashable k, LargeHashable v) => LargeHashable (HashMap.HashMap k v) where
+    updateHash = updateHashHashMap
+
 {-# INLINE updateHashTuple #-}
 updateHashTuple :: (LargeHashable a, LargeHashable b) => (a, b) -> LH ()
 updateHashTuple (!a, !b) = updateHash a >> updateHash b
@@ -202,7 +273,7 @@ updateHashTuple (!a, !b) = updateHash a >> updateHash b
 instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
     updateHash = updateHashTuple
 
-{-# INLINE updateHashTriple#-}
+{-# INLINE updateHashTriple #-}
 updateHashTriple :: (LargeHashable a, LargeHashable b, LargeHashable c) => (a, b, c) -> LH ()
 updateHashTriple (a, b, c) = updateHash a >> updateHash b >> updateHash c
 

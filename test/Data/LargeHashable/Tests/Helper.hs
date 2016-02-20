@@ -7,6 +7,8 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.Set as S
+import qualified Data.Map as M
 import GHC.Generics
 import Data.LargeHashable
 import Data.Bytes.Serial
@@ -30,6 +32,17 @@ instance Arbitrary TL.Text where
     arbitrary = liftM TL.fromChunks arbitrary
     shrink t =
         map TL.fromChunks (shrink (TL.toChunks t))
+
+instance (Ord k, Ord a, Arbitrary k, Arbitrary a) => Arbitrary (M.Map k a) where
+    arbitrary = liftM M.fromList arbitrary
+    shrink m =
+        map M.fromList (shrink (M.toList m))
+
+instance (Ord a, Arbitrary a) => Arbitrary (S.Set a) where
+    arbitrary = liftM S.fromList arbitrary
+    shrink m =
+        map S.fromList (shrink (S.toList m))
+
 
 data TestA
     = TestA
