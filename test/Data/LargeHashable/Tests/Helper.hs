@@ -4,6 +4,7 @@ module Data.LargeHashable.Tests.Helper where
 import Control.Monad
 import Test.QuickCheck
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import GHC.Generics
@@ -24,6 +25,11 @@ instance Arbitrary BL.ByteString where
     arbitrary = liftM BL.fromChunks arbitrary
     shrink t =
         map BL.fromChunks (shrink (BL.toChunks t))
+
+instance Arbitrary TL.Text where
+    arbitrary = liftM TL.fromChunks arbitrary
+    shrink t =
+        map TL.fromChunks (shrink (TL.toChunks t))
 
 data TestA
     = TestA

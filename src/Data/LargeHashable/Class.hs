@@ -20,6 +20,8 @@ import Data.Ratio
 import GHC.Generics
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Internal.Lazy as TLI
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
@@ -41,18 +43,34 @@ class LargeHashable a where
 largeHash :: LargeHashable a => HashAlgorithm -> a -> Hash
 largeHash algo x = runLH algo (updateHash x)
 
-{-# INLINE updateHashText #-}
-updateHashText :: T.Text -> LH ()
-updateHashText !t = do
+{-# INLINE updateHashTextData #-}
+updateHashTextData :: T.Text -> LH ()
+updateHashTextData !t = do
     updates <- hashUpdates
     ioInLH $ do
-        hu_updateULong updates (fromIntegral (T.length t))
         TF.useAsPtr t $ \valPtr units ->
             hu_updatePtr updates (castPtr valPtr) (fromIntegral (2 * units))
         return ()
 
+{-# INLINE updateHashText #-}
+updateHashText :: T.Text -> LH ()
+updateHashText !t = do
+    updateHashTextData t
+    updates <- hashUpdates
+    ioInLH $ hu_updateULong updates (fromIntegral (T.length t))
+
 instance LargeHashable T.Text where
     updateHash = updateHashText
+
+{-# INLINE updateHashLazyText #-}
+updateHashLazyText :: Int -> TL.Text -> LH ()
+updateHashLazyText !length !(TLI.Chunk t next) = do
+    updateHashTextData t
+    updateHashLazyText (length + T.length t) next
+updateHashLazyText !length TLI.Empty = updateHash length
+
+instance LargeHashable TL.Text where
+    updateHash = updateHashLazyText 0
 
 {-# INLINE updateHashByteStringData #-}
 updateHashByteStringData :: B.ByteString -> LH ()

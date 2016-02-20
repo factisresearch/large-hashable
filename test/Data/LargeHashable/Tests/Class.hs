@@ -8,12 +8,18 @@ import Data.LargeHashable
 import Data.LargeHashable.MD5
 import Data.LargeHashable.Tests.Helper
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 
 prop_appendTextOk :: T.Text -> T.Text -> Bool
 prop_appendTextOk t1 t2 =
     runMD5 (updateHash (t1 `T.append` t2)) /=
+    runMD5 (updateHash t1 >> updateHash t2)
+
+prop_appendLazyTextOk :: TL.Text -> TL.Text -> Bool
+prop_appendLazyTextOk t1 t2 =
+    runMD5 (updateHash (t1 `TL.append` t2)) /=
     runMD5 (updateHash t1 >> updateHash t2)
 
 prop_appendListOk :: [Int] -> [Int] -> Bool
@@ -31,10 +37,15 @@ prop_appendLazyByteStringOk b1 b2 =
     runMD5 (updateHash (b1 `BL.append` b2)) /=
     runMD5 (updateHash b1 >> updateHash b2)
 
-test_irrelevantChunking :: IO ()
-test_irrelevantChunking = do
+test_irrelevantByteStringChunking :: IO ()
+test_irrelevantByteStringChunking = do
     assertEqual (largeHash md5HashAlgorithm (BL.fromChunks ["foo", "ba", "r"]))
                 (largeHash md5HashAlgorithm (BL.fromChunks ["foob", "ar"]))
+
+test_irrelevantTextChunking :: IO ()
+test_irrelevantTextChunking = do
+    assertEqual (largeHash md5HashAlgorithm (TL.fromChunks ["don't", " pa", "nic"]))
+                (largeHash md5HashAlgorithm (TL.fromChunks ["don", "'t p", "an", "ic"]))
 
 -- of course we can't fully prove uniqueness using
 -- properties and there is a small chance of collisions
@@ -58,6 +69,12 @@ prop_bytestringUniqueness = generic_uniquenessProp
 
 prop_lazyBytestringUniqueness :: BL.ByteString -> BL.ByteString -> Bool
 prop_lazyBytestringUniqueness = generic_uniquenessProp
+
+prop_textUniqueness :: T.Text -> T.Text -> Bool
+prop_textUniqueness = generic_uniquenessProp
+
+prop_lazyTextUniqueness :: TL.Text -> TL.Text -> Bool
+prop_lazyTextUniqueness = generic_uniquenessProp
 
 prop_DoubleUniquess :: Double -> Double -> Bool
 prop_DoubleUniquess = generic_uniquenessProp
