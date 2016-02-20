@@ -15,10 +15,20 @@ extra-source-files:  cbits/md5.h
 
 library
   hs-source-dirs:      src
-  c-sources:           cbits/md5.c, cbits/f2i.c
-  exposed-modules:     Data.LargeHashable, Data.LargeHashable.Class, Data.LargeHashable.MD5, Data.LargeHashable.Intern
+  c-sources:           cbits/md5.c
+                     , cbits/f2i.c
+  exposed-modules:     Data.LargeHashable
+                     , Data.LargeHashable.Class
+                     , Data.LargeHashable.MD5
+                     , Data.LargeHashable.Intern
                      , Data.LargeHashable.Serial
-  build-depends:       base >= 4.7 && < 5, text, bytestring, transformers, base16-bytestring, bytes
+  build-depends:       base >= 4.7 && < 5
+                     , text
+                     , bytestring
+                     , transformers
+                     , base16-bytestring
+                     , bytes
+                     , containers
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
@@ -28,23 +38,37 @@ library
 executable large-hashable-benchmark
   hs-source-dirs:      benchmark
   main-is:             Main.hs
-  other-modules:       Data.LargeHashable.Benchmarks.CryptoHash,
-                       Data.LargeHashable.Benchmarks.Main
+  other-modules:       Data.LargeHashable.Benchmarks.CryptoHash
+                     , Data.LargeHashable.Benchmarks.Main
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures
-  build-depends:       base, large-hashable, safecopy, text, deepseq, cryptohash, bytestring,
-                       cereal, byteable, transformers, bytes
+  build-depends:       base
+                     , large-hashable
+                     , safecopy
+                     , text
+                     , deepseq
+                     , cryptohash
+                     , bytestring
+                     , cereal
+                     , byteable
+                     , transformers
+                     , bytes
   default-language:    Haskell2010
 
 test-suite large-hashable-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
-  build-depends:       base, large-hashable, HTF, tasty-quickcheck, QuickCheck, text, bytes,
-                       bytestring
+  build-depends:       base
+                     , large-hashable
+                     , HTF
+                     , QuickCheck
+                     , text
+                     , bytes
+                     , bytestring
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
@@ -54,4 +78,4 @@ test-suite large-hashable-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/large-hashable
+  location: https://github.com/factisresearch/large-hashable
