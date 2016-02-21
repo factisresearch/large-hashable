@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -F -pgmF htfpp #-}
 module Data.LargeHashable.Tests.Class where
 
-import Test.Framework
+import Test.Framework hiding (Fixed (..))
 
 import Data.LargeHashable
 import Data.LargeHashable.MD5
@@ -13,6 +13,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Data.Set (Set ())
 import Data.Map (Map ())
+import Data.Fixed
 
 prop_appendTextOk :: T.Text -> T.Text -> Bool
 prop_appendTextOk t1 t2 =
@@ -89,3 +90,5 @@ prop_setUniquess = generic_uniquenessProp
 
 prop_mapUniquess :: Map Int String -> Map Int String -> Bool
 prop_mapUniquess = generic_uniquenessProp
+prop_fixedUniquess :: Fixed E1 -> Fixed E1 -> Bool
+prop_fixedUniquess = generic_uniquenessProp

@@ -13,11 +13,12 @@ import Data.LargeHashable.Intern
 import Data.Char (ord)
 import Foreign.C.Types
 import Foreign.Ptr
+import GHC.Generics
 import Data.Word
 import Data.Int
 import Data.Bits
 import Data.Ratio
-import GHC.Generics
+import Data.Fixed
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
 import qualified Data.Text.Lazy as TL
@@ -185,6 +186,13 @@ foreign import ccall floatToWord32 :: Float -> Word32
 
 instance LargeHashable Float where
     updateHash = updateHash . floatToWord32
+
+{-# INLINE updateHashFixed #-}
+updateHashFixed :: HasResolution a => Fixed a -> LH ()
+updateHashFixed f = updateHash (truncate . (* f) . fromInteger $ resolution f :: Integer)
+
+instance HasResolution a => LargeHashable (Fixed a) where
+    updateHash = updateHashFixed
 
 {-# INLINE updateHashBool #-}
 updateHashBool :: Bool -> LH ()
