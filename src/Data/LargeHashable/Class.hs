@@ -40,6 +40,14 @@ import qualified Data.HashMap.Lazy as HashMap
 -- unncessary hash collisions arise. A rule of thumb: hash all
 -- information that you would also need for serializing/deserializing
 -- values of your datatype.
+--
+-- The law of this typeclass is the following: If two values are equal
+-- according to '==', then the finally computed hashes muist also be equal
+-- according to '=='. However it is not required that the hashes of inequal
+-- values have to be inequal. Also note that an instance of 'LargeHashable'
+-- does not require a instance of 'Eq'. Using any sane algorithm the chance
+-- of a collision should be 1 / n where n is the number of different hashes
+-- possible.
 class LargeHashable a where
     updateHash :: a -> LH ()
     default updateHash :: (LargeHashable' (Rep a), Generic a) => a -> LH ()
