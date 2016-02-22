@@ -43,7 +43,7 @@ import qualified Data.HashMap.Lazy as HashMap
 -- values of your datatype.
 --
 -- The law of this typeclass is the following: If two values are equal
--- according to '==', then the finally computed hashes muist also be equal
+-- according to '==', then the finally computed hashes must also be equal
 -- according to '=='. However it is not required that the hashes of inequal
 -- values have to be inequal. Also note that an instance of 'LargeHashable'
 -- does not require a instance of 'Eq'. Using any sane algorithm the chance
