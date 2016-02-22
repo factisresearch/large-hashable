@@ -14,6 +14,7 @@ import Data.Char (ord)
 import Foreign.C.Types
 import Foreign.Ptr
 import GHC.Generics
+import Data.Foldable
 import Data.Word
 import Data.Int
 import Data.Bits
@@ -223,7 +224,7 @@ setFoldFun action value = action >> updateHash value
 {-# INLINE updateHashSet #-}
 updateHashSet :: LargeHashable a => S.Set a -> LH ()
 updateHashSet !set = do
-    foldl setFoldFun (return ()) set
+    foldl' setFoldFun (return ()) set
     updateHash (S.size set)
 
 instance LargeHashable a => LargeHashable (S.Set a) where
@@ -232,7 +233,7 @@ instance LargeHashable a => LargeHashable (S.Set a) where
 {-# INLINE updateHashIntSet #-}
 updateHashIntSet :: IntSet.IntSet -> LH ()
 updateHashIntSet !set = do
-    IntSet.foldl setFoldFun (return ()) set
+    IntSet.foldl' setFoldFun (return ()) set
     updateHash (IntSet.size set)
 
 -- Lazy and Strict IntSet share the same definition
@@ -256,7 +257,7 @@ mapFoldFun action key value = action >> updateHash key >> updateHash value
 {-# INLINE updateHashMap #-}
 updateHashMap :: (LargeHashable k, LargeHashable a) => M.Map k a -> LH ()
 updateHashMap !map = do
-        M.foldlWithKey mapFoldFun (return ()) map
+        M.foldlWithKey' mapFoldFun (return ()) map
         updateHash (M.size map)
 
 -- Lazy and Strict Map share the same definition
@@ -266,7 +267,7 @@ instance (LargeHashable k, LargeHashable a) => LargeHashable (M.Map k a) where
 {-# INLINE updateHashIntMap #-}
 updateHashIntMap :: LargeHashable a => (IntMap.IntMap a) -> LH ()
 updateHashIntMap !map = do
-    IntMap.foldlWithKey mapFoldFun (return ()) map
+    IntMap.foldlWithKey' mapFoldFun (return ()) map
     updateHash (IntMap.size map)
 
 -- Lazy and Strict IntMap share the same definition
