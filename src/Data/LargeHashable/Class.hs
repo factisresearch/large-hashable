@@ -13,17 +13,26 @@ import Data.LargeHashable.Intern
 import Data.Char (ord)
 import Foreign.C.Types
 import Foreign.Ptr
+import GHC.Generics
+import Data.Foldable
 import Data.Word
 import Data.Int
 import Data.Bits
 import Data.Ratio
-import GHC.Generics
+import Data.Fixed
 import qualified Data.Text as T
 import qualified Data.Text.Foreign as TF
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Internal.Lazy as TLI
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
-
+import qualified Data.Set as S
+import qualified Data.IntSet as IntSet
+import qualified Data.HashSet as HashSet
+import qualified Data.Map as M
+import qualified Data.IntMap as IntMap
+import qualified Data.HashMap.Lazy as HashMap
 
 -- | A type class for computing large hashes (i.e. MD5, SHA256, ...) from
 -- haskell values.
@@ -33,6 +42,14 @@ import qualified Data.ByteString.Lazy.Internal as BLI
 -- unncessary hash collisions arise. A rule of thumb: hash all
 -- information that you would also need for serializing/deserializing
 -- values of your datatype.
+--
+-- The law of this typeclass is the following: If two values are equal
+-- according to '==', then the finally computed hashes must also be equal
+-- according to '=='. However it is not required that the hashes of inequal
+-- values have to be inequal. Also note that an instance of 'LargeHashable'
+-- does not require a instance of 'Eq'. Using any sane algorithm the chance
+-- of a collision should be 1 / n where n is the number of different hashes
+-- possible.
 class LargeHashable a where
     updateHash :: a -> LH ()
     default updateHash :: (LargeHashable' (Rep a), Generic a) => a -> LH ()
@@ -41,35 +58,63 @@ class LargeHashable a where
 largeHash :: LargeHashable a => HashAlgorithm -> a -> Hash
 largeHash algo x = runLH algo (updateHash x)
 
-{-# INLINE updateHashText #-}
-updateHashText :: T.Text -> LH ()
-updateHashText !t = do
+{-# INLINE updateHashTextData #-}
+updateHashTextData :: T.Text -> LH ()
+updateHashTextData !t = do
     updates <- hashUpdates
     ioInLH $ do
-        hu_updateULong updates (fromIntegral (T.length t))
         TF.useAsPtr t $ \valPtr units ->
             hu_updatePtr updates (castPtr valPtr) (fromIntegral (2 * units))
         return ()
 
+{-# INLINE updateHashText #-}
+updateHashText :: T.Text -> LH ()
+updateHashText !t = do
+    updateHashTextData t
+    updates <- hashUpdates
+    ioInLH $ hu_updateULong updates (fromIntegral (T.length t))
+
 instance LargeHashable T.Text where
     updateHash = updateHashText
 
-{-# INLINE updateHashByteString #-}
-updateHashByteString :: B.ByteString -> LH ()
-updateHashByteString !b = do
+{-# INLINE updateHashLazyText #-}
+updateHashLazyText :: Int -> TL.Text -> LH ()
+updateHashLazyText !length !(TLI.Chunk t next) = do
+    updateHashTextData t
+    updateHashLazyText (length + T.length t) next
+updateHashLazyText !length TLI.Empty = updateHash length
+
+instance LargeHashable TL.Text where
+    updateHash = updateHashLazyText 0
+
+{-# INLINE updateHashByteStringData #-}
+updateHashByteStringData :: B.ByteString -> LH ()
+updateHashByteStringData !b = do
     updates <- hashUpdates
     ioInLH $ do
         ptr <- B.useAsCString b return
         let length = B.length b
-        hu_updateULong updates (fromIntegral length)
         hu_updatePtr updates (castPtr ptr)  length
+
+{-# INLINE updateHashByteString #-}
+updateHashByteString :: B.ByteString -> LH ()
+updateHashByteString !b = do
+    updateHashByteStringData b
+    updates <- hashUpdates
+    ioInLH $ hu_updateULong updates (fromIntegral (B.length b))
 
 instance LargeHashable B.ByteString where
     updateHash = updateHashByteString
 
+{-# INLINE updateHashLazyByteString #-}
+updateHashLazyByteString :: Int -> BL.ByteString -> LH ()
+updateHashLazyByteString !length !(BLI.Chunk bs next) = do
+    updateHashByteStringData bs
+    updateHashLazyByteString (length + B.length bs) next
+updateHashLazyByteString !length !BLI.Empty = updateHash length
+
 instance LargeHashable BL.ByteString where
-    updateHash (BLI.Chunk bs next) = updateHash (B.length bs) >> updateHash bs >> updateHash next
-    updateHash BLI.Empty = updateHash (0 :: CULong)
+    updateHash = updateHashLazyByteString 0
 
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
@@ -107,7 +152,7 @@ instance LargeHashable Word32 where
     updateHash = updateHashBoundedIntegral
 
 instance LargeHashable Word64 where
-    updateHash = updateHash . CULong
+    updateHash = updateHashBoundedIntegral
 
 instance LargeHashable Char where
     -- TODO: ord can't be used for 100% of unicode
@@ -133,6 +178,23 @@ updateHashInteger !i
 instance LargeHashable Integer where
     updateHash = updateHashInteger
 
+foreign import ccall doubleToWord64 :: Double -> Word64
+
+instance LargeHashable Double where
+    updateHash = updateHash . doubleToWord64
+
+foreign import ccall floatToWord32 :: Float -> Word32
+
+instance LargeHashable Float where
+    updateHash = updateHash . floatToWord32
+
+{-# INLINE updateHashFixed #-}
+updateHashFixed :: HasResolution a => Fixed a -> LH ()
+updateHashFixed f = updateHash (truncate . (* f) . fromInteger $ resolution f :: Integer)
+
+instance HasResolution a => LargeHashable (Fixed a) where
+    updateHash = updateHashFixed
+
 {-# INLINE updateHashBool #-}
 updateHashBool :: Bool -> LH ()
 updateHashBool !True  = updateHash (1 :: CULong)
@@ -155,6 +217,72 @@ updateHashList = loop 0
 instance LargeHashable a => LargeHashable [a] where
     updateHash = updateHashList
 
+{-# INLINE setFoldFun #-}
+setFoldFun :: LargeHashable a => LH () -> a -> LH ()
+setFoldFun action value = action >> updateHash value
+
+{-# INLINE updateHashSet #-}
+updateHashSet :: LargeHashable a => S.Set a -> LH ()
+updateHashSet !set = do
+    foldl' setFoldFun (return ()) set
+    updateHash (S.size set)
+
+instance LargeHashable a => LargeHashable (S.Set a) where
+    updateHash = updateHashSet
+
+{-# INLINE updateHashIntSet #-}
+updateHashIntSet :: IntSet.IntSet -> LH ()
+updateHashIntSet !set = do
+    IntSet.foldl' setFoldFun (return ()) set
+    updateHash (IntSet.size set)
+
+-- Lazy and Strict IntSet share the same definition
+instance LargeHashable IntSet.IntSet where
+    updateHash = updateHashIntSet
+
+{-# INLINE updateHashHashSet #-}
+updateHashHashSet :: LargeHashable a => HashSet.HashSet a -> LH ()
+updateHashHashSet !set = do
+    HashSet.foldl' setFoldFun (return ()) set
+    updateHash (HashSet.size set)
+
+-- Lazy and Strict HashSet share the same definition
+instance LargeHashable a => LargeHashable (HashSet.HashSet a) where
+    updateHash = updateHashHashSet
+
+{-# INLINE mapFoldFun #-}
+mapFoldFun :: (LargeHashable k, LargeHashable a) => LH () -> k -> a -> LH ()
+mapFoldFun action key value = action >> updateHash key >> updateHash value
+
+{-# INLINE updateHashMap #-}
+updateHashMap :: (LargeHashable k, LargeHashable a) => M.Map k a -> LH ()
+updateHashMap !map = do
+        M.foldlWithKey' mapFoldFun (return ()) map
+        updateHash (M.size map)
+
+-- Lazy and Strict Map share the same definition
+instance (LargeHashable k, LargeHashable a) => LargeHashable (M.Map k a) where
+    updateHash = updateHashMap
+
+{-# INLINE updateHashIntMap #-}
+updateHashIntMap :: LargeHashable a => (IntMap.IntMap a) -> LH ()
+updateHashIntMap !map = do
+    IntMap.foldlWithKey' mapFoldFun (return ()) map
+    updateHash (IntMap.size map)
+
+-- Lazy and Strict IntMap share the same definition
+instance LargeHashable a => LargeHashable (IntMap.IntMap a) where
+    updateHash = updateHashIntMap
+
+updateHashHashMap :: (LargeHashable k, LargeHashable v) => HashMap.HashMap k v -> LH ()
+updateHashHashMap !map = do
+    HashMap.foldlWithKey' mapFoldFun (return ()) map
+    updateHash (HashMap.size map)
+
+-- Lazy and Strict HashMap share the same definition
+instance (LargeHashable k, LargeHashable v) => LargeHashable (HashMap.HashMap k v) where
+    updateHash = updateHashHashMap
+
 {-# INLINE updateHashTuple #-}
 updateHashTuple :: (LargeHashable a, LargeHashable b) => (a, b) -> LH ()
 updateHashTuple (!a, !b) = updateHash a >> updateHash b
@@ -162,13 +290,37 @@ updateHashTuple (!a, !b) = updateHash a >> updateHash b
 instance (LargeHashable a, LargeHashable b) => LargeHashable (a, b) where
     updateHash = updateHashTuple
 
-{-# INLINE updateHashMaybe #-}
+{-# INLINE updateHashTriple #-}
+updateHashTriple :: (LargeHashable a, LargeHashable b, LargeHashable c) => (a, b, c) -> LH ()
+updateHashTriple (a, b, c) = updateHash a >> updateHash b >> updateHash c
+
+instance (LargeHashable a, LargeHashable b, LargeHashable c) => LargeHashable (a, b, c) where
+    updateHash = updateHashTriple
+
+{-# INLINE updateHashQuadruple #-}
+updateHashQuadruple :: (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d) => (a, b, c, d) -> LH ()
+updateHashQuadruple (a, b, c, d) = updateHash a >> updateHash b >> updateHash c >> updateHash d
+
+instance (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d) => LargeHashable (a, b, c, d) where
+    updateHash = updateHashQuadruple
+
+{-# INLINE updateHashQuintuple #-}
+updateHashQuintuple :: (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d, LargeHashable e) => (a, b, c, d, e) -> LH ()
+updateHashQuintuple (a, b, c, d, e) = updateHash a >> updateHash b >> updateHash c >> updateHash d >> updateHash e
+
+instance (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d, LargeHashable e) => LargeHashable (a, b, c, d, e) where
+    updateHash = updateHashQuintuple
+
 updateHashMaybe :: LargeHashable a => Maybe a -> LH ()
 updateHashMaybe !Nothing   = updateHash (0 :: CULong)
 updateHashMaybe !(Just !x) = updateHash (1 :: CULong) >> updateHash x
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
+
+instance (LargeHashable a, LargeHashable b) => LargeHashable (Either a b) where
+    updateHash (Left !l)  = updateHash (0 :: CULong) >> updateHash l
+    updateHash (Right !r) = updateHash (1 :: CULong) >> updateHash r
 
 instance LargeHashable () where
     updateHash () = updateHash (0 :: CULong)
