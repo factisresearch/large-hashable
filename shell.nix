@@ -5,9 +5,9 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, base16-bytestring, byteable, bytes
-      , bytestring, cereal, containers, cryptohash, deepseq, HTF
-      , QuickCheck, safecopy, stdenv, tasty-quickcheck, text
-      , transformers
+      , bytestring, cereal, containers, cryptohash, deepseq, hashable
+      , HTF, QuickCheck, safecopy, stdenv, text, transformers
+      , unordered-containers
       }:
       mkDerivation {
         pname = "large-hashable";
@@ -17,14 +17,15 @@ let
         isExecutable = true;
         libraryHaskellDepends = [
           base base16-bytestring bytes bytestring containers text
-          transformers
+          transformers unordered-containers
         ];
         executableHaskellDepends = [
           base byteable bytes bytestring cereal cryptohash deepseq safecopy
           text transformers
         ];
         testHaskellDepends = [
-          base bytes bytestring HTF QuickCheck tasty-quickcheck text
+          base bytes bytestring containers hashable HTF QuickCheck text
+          unordered-containers
         ];
         homepage = "http://github.com/githubuser/large-hashable#readme";
         description = "Initial project template from stack";

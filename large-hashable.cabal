@@ -70,6 +70,8 @@ test-suite large-hashable-test
                      , bytes
                      , bytestring
                      , containers
+                     , unordered-containers
+                     , hashable
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
