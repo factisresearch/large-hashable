@@ -6,8 +6,8 @@ let
 
   f = { mkDerivation, base, base16-bytestring, byteable, bytes
       , bytestring, cereal, containers, cryptohash, deepseq, hashable
-      , HTF, QuickCheck, safecopy, stdenv, text, transformers
-      , unordered-containers
+      , HTF, QuickCheck, safecopy, stdenv, template-haskell, text, time
+      , transformers, unordered-containers
       }:
       mkDerivation {
         pname = "large-hashable";
@@ -16,8 +16,8 @@ let
         isLibrary = true;
         isExecutable = true;
         libraryHaskellDepends = [
-          base base16-bytestring bytes bytestring containers text
-          transformers unordered-containers
+          base base16-bytestring bytes bytestring containers template-haskell
+          text time transformers unordered-containers
         ];
         executableHaskellDepends = [
           base byteable bytes bytestring cereal cryptohash deepseq safecopy
