@@ -30,6 +30,7 @@ library
                      , bytes
                      , containers
                      , unordered-containers
+                     , time
                      , template-haskell
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds

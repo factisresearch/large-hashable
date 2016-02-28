@@ -25,6 +25,7 @@ import qualified Data.Text.Foreign as TF
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Internal.Lazy as TLI
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Short as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
 import qualified Data.Set as S
@@ -33,8 +34,10 @@ import qualified Data.HashSet as HashSet
 import qualified Data.Map as M
 import qualified Data.IntMap as IntMap
 import qualified Data.HashMap.Lazy as HashMap
+import Data.Time
+import Data.Time.Clock.TAI
 
--- | A type class for computing large hashes (i.e. MD5, SHA256, ...) from
+-- | A type class for computing hashes (i.e. MD5, SHA256, ...) from
 -- haskell values.
 --
 -- Important: when implementing `LargeHashable` for your custom datatype,
@@ -55,6 +58,9 @@ class LargeHashable a where
     default updateHash :: (LargeHashable' (Rep a), Generic a) => a -> LH ()
     updateHash = updateHash' . from
 
+-- | 'largeHash' is the central function of this package.
+--   For a given value it computes a 'Hash' using the given
+--   'HashAlgorithm'.
 largeHash :: LargeHashable a => HashAlgorithm -> a -> Hash
 largeHash algo x = runLH algo (updateHash x)
 
@@ -79,7 +85,7 @@ instance LargeHashable T.Text where
 
 {-# INLINE updateHashLazyText #-}
 updateHashLazyText :: Int -> TL.Text -> LH ()
-updateHashLazyText !length !(TLI.Chunk t next) = do
+updateHashLazyText !length (TLI.Chunk !t !next) = do
     updateHashTextData t
     updateHashLazyText (length + T.length t) next
 updateHashLazyText !length TLI.Empty = updateHash length
@@ -108,13 +114,16 @@ instance LargeHashable B.ByteString where
 
 {-# INLINE updateHashLazyByteString #-}
 updateHashLazyByteString :: Int -> BL.ByteString -> LH ()
-updateHashLazyByteString !length !(BLI.Chunk bs next) = do
+updateHashLazyByteString !length (BLI.Chunk !bs !next) = do
     updateHashByteStringData bs
     updateHashLazyByteString (length + B.length bs) next
-updateHashLazyByteString !length !BLI.Empty = updateHash length
+updateHashLazyByteString !length BLI.Empty = updateHash length
 
 instance LargeHashable BL.ByteString where
     updateHash = updateHashLazyByteString 0
+
+instance LargeHashable BS.ShortByteString where
+    updateHash = updateHash . BS.fromShort
 
 {-# INLINE updateHashBoundedIntegral #-}
 -- Note: This only works if a's bounds are smaller or
@@ -197,8 +206,8 @@ instance HasResolution a => LargeHashable (Fixed a) where
 
 {-# INLINE updateHashBool #-}
 updateHashBool :: Bool -> LH ()
-updateHashBool !True  = updateHash (1 :: CULong)
-updateHashBool !False = updateHash (0 :: CULong)
+updateHashBool True  = updateHash (1 :: CULong)
+updateHashBool False = updateHash (0 :: CULong)
 
 instance LargeHashable Bool where
     updateHash = updateHashBool
@@ -265,7 +274,7 @@ instance (LargeHashable k, LargeHashable a) => LargeHashable (M.Map k a) where
     updateHash = updateHashMap
 
 {-# INLINE updateHashIntMap #-}
-updateHashIntMap :: LargeHashable a => (IntMap.IntMap a) -> LH ()
+updateHashIntMap :: LargeHashable a => IntMap.IntMap a -> LH ()
 updateHashIntMap !map = do
     IntMap.foldlWithKey' mapFoldFun (return ()) map
     updateHash (IntMap.size map)
@@ -312,8 +321,8 @@ instance (LargeHashable a, LargeHashable b, LargeHashable c, LargeHashable d, La
     updateHash = updateHashQuintuple
 
 updateHashMaybe :: LargeHashable a => Maybe a -> LH ()
-updateHashMaybe !Nothing   = updateHash (0 :: CULong)
-updateHashMaybe !(Just !x) = updateHash (1 :: CULong) >> updateHash x
+updateHashMaybe Nothing   = updateHash (0 :: CULong)
+updateHashMaybe (Just !x) = updateHash (1 :: CULong) >> updateHash x
 
 instance LargeHashable a => LargeHashable (Maybe a) where
     updateHash = updateHashMaybe
@@ -334,6 +343,38 @@ instance (Integral a, LargeHashable a) => LargeHashable (Ratio a) where
     updateHash !i = do
         updateHash $ numerator i
         updateHash $ denominator i
+
+instance LargeHashable AbsoluteTime where
+    updateHash t = updateHash $ diffAbsoluteTime t taiEpoch
+
+instance LargeHashable DiffTime where
+    -- could be replaced by diffTimeToPicoseconds as soon as
+    -- time 1.6 becomes more common
+    updateHash = updateHash . (fromRational . toRational :: DiffTime -> Pico)
+
+instance LargeHashable NominalDiffTime where
+    updateHash = updateHash . (fromRational . toRational :: NominalDiffTime -> Pico)
+
+instance LargeHashable LocalTime where
+    updateHash (LocalTime d tod) = updateHash d >> updateHash tod
+
+instance LargeHashable ZonedTime where
+    updateHash (ZonedTime lt tz) = updateHash lt >> updateHash tz
+
+instance LargeHashable TimeOfDay where
+    updateHash (TimeOfDay h m s) = updateHash h >> updateHash m >> updateHash s
+
+instance LargeHashable TimeZone where
+    updateHash (TimeZone min summerOnly name) = updateHash min >> updateHash summerOnly >> updateHash name
+
+instance LargeHashable UTCTime where
+    updateHash (UTCTime d dt) = updateHash d >> updateHash dt
+
+instance LargeHashable Day where
+    updateHash (ModifiedJulianDay d) = updateHash d
+
+instance LargeHashable UniversalTime where
+    updateHash (ModJulianDate d) = updateHash d
 
 class LargeHashable' f where
     updateHash' :: f p -> LH ()
