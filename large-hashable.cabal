@@ -21,6 +21,7 @@ library
                      , Data.LargeHashable.MD5
                      , Data.LargeHashable.Intern
                      , Data.LargeHashable.Serial
+                     , Data.LargeHashable.TH
   build-depends:       base
                      , text
                      , bytestring
@@ -29,6 +30,7 @@ library
                      , bytes
                      , containers
                      , unordered-containers
+                     , template-haskell
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
