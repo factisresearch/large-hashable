@@ -1,17 +1,19 @@
 name:                large-hashable
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Efficiently hash Haskell values with MD5, SHA256, SHA512 and other hashing algorithms
 description:         Please see README.md
-homepage:            http://github.com/githubuser/large-hashable#readme
+homepage:            https://github.com/factisresearch/large-hashable
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2010 Author Here
+author:              Stefan Wehr, Lukas Epple
+maintainer:          Stefan Wehr <wehr@cp-med.com>
+copyright:           2016 factisresearch GmbH
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
-extra-source-files:  cbits/md5.h
+extra-source-files:
+    cbits/md5.h
+    README.md
 
 library
   hs-source-dirs:      src
@@ -33,7 +35,7 @@ library
                      , time
                      , template-haskell
   default-language:    Haskell2010
-  ghc-options:         -optc -O3 -fno-cse -Werror -W -fwarn-unused-imports -fwarn-unused-binds
+  ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures
@@ -44,7 +46,7 @@ executable large-hashable-benchmark
   other-modules:       Data.LargeHashable.Benchmarks.CryptoHash
                      , Data.LargeHashable.Benchmarks.Main
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
-                       -Werror -W -fwarn-unused-imports -fwarn-unused-binds
+                       -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures
@@ -76,7 +78,7 @@ test-suite large-hashable-test
                      , unordered-containers
                      , hashable
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
-                       -Werror -W -fwarn-unused-imports -fwarn-unused-binds
+                       -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures
