@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Stefan Wehr, Lukas Epple
 maintainer:          Stefan Wehr <wehr@cp-med.com>
-copyright:           2016 factisresearch GmbH
+copyright:           2015 - 2016 factis research GmbH
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
