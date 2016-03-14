@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Data.LargeHashable.Serial (serialLargeHash) where
 
 import Data.LargeHashable.Intern

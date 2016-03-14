@@ -85,10 +85,10 @@ instance LargeHashable T.Text where
 
 {-# INLINE updateHashLazyText #-}
 updateHashLazyText :: Int -> TL.Text -> LH ()
-updateHashLazyText !length (TLI.Chunk !t !next) = do
+updateHashLazyText !len (TLI.Chunk !t !next) = do
     updateHashTextData t
-    updateHashLazyText (length + T.length t) next
-updateHashLazyText !length TLI.Empty = updateHash length
+    updateHashLazyText (len + T.length t) next
+updateHashLazyText !len TLI.Empty = updateHash len
 
 instance LargeHashable TL.Text where
     updateHash = updateHashLazyText 0
@@ -99,8 +99,7 @@ updateHashByteStringData !b = do
     updates <- hashUpdates
     ioInLH $ do
         ptr <- B.useAsCString b return
-        let length = B.length b
-        hu_updatePtr updates (castPtr ptr)  length
+        hu_updatePtr updates (castPtr ptr) (B.length b)
 
 {-# INLINE updateHashByteString #-}
 updateHashByteString :: B.ByteString -> LH ()
@@ -114,10 +113,10 @@ instance LargeHashable B.ByteString where
 
 {-# INLINE updateHashLazyByteString #-}
 updateHashLazyByteString :: Int -> BL.ByteString -> LH ()
-updateHashLazyByteString !length (BLI.Chunk !bs !next) = do
+updateHashLazyByteString !len (BLI.Chunk !bs !next) = do
     updateHashByteStringData bs
-    updateHashLazyByteString (length + B.length bs) next
-updateHashLazyByteString !length BLI.Empty = updateHash length
+    updateHashLazyByteString (len + B.length bs) next
+updateHashLazyByteString !len BLI.Empty = updateHash len
 
 instance LargeHashable BL.ByteString where
     updateHash = updateHashLazyByteString 0
@@ -265,9 +264,9 @@ mapFoldFun action key value = action >> updateHash key >> updateHash value
 
 {-# INLINE updateHashMap #-}
 updateHashMap :: (LargeHashable k, LargeHashable a) => M.Map k a -> LH ()
-updateHashMap !map = do
-        M.foldlWithKey' mapFoldFun (return ()) map
-        updateHash (M.size map)
+updateHashMap !m = do
+        M.foldlWithKey' mapFoldFun (return ()) m
+        updateHash (M.size m)
 
 -- Lazy and Strict Map share the same definition
 instance (LargeHashable k, LargeHashable a) => LargeHashable (M.Map k a) where
@@ -275,18 +274,18 @@ instance (LargeHashable k, LargeHashable a) => LargeHashable (M.Map k a) where
 
 {-# INLINE updateHashIntMap #-}
 updateHashIntMap :: LargeHashable a => IntMap.IntMap a -> LH ()
-updateHashIntMap !map = do
-    IntMap.foldlWithKey' mapFoldFun (return ()) map
-    updateHash (IntMap.size map)
+updateHashIntMap !m = do
+    IntMap.foldlWithKey' mapFoldFun (return ()) m
+    updateHash (IntMap.size m)
 
 -- Lazy and Strict IntMap share the same definition
 instance LargeHashable a => LargeHashable (IntMap.IntMap a) where
     updateHash = updateHashIntMap
 
 updateHashHashMap :: (LargeHashable k, LargeHashable v) => HashMap.HashMap k v -> LH ()
-updateHashHashMap !map = do
-    HashMap.foldlWithKey' mapFoldFun (return ()) map
-    updateHash (HashMap.size map)
+updateHashHashMap !m = do
+    HashMap.foldlWithKey' mapFoldFun (return ()) m
+    updateHash (HashMap.size m)
 
 -- Lazy and Strict HashMap share the same definition
 instance (LargeHashable k, LargeHashable v) => LargeHashable (HashMap.HashMap k v) where
@@ -365,7 +364,7 @@ instance LargeHashable TimeOfDay where
     updateHash (TimeOfDay h m s) = updateHash h >> updateHash m >> updateHash s
 
 instance LargeHashable TimeZone where
-    updateHash (TimeZone min summerOnly name) = updateHash min >> updateHash summerOnly >> updateHash name
+    updateHash (TimeZone mintz summerOnly name) = updateHash mintz >> updateHash summerOnly >> updateHash name
 
 instance LargeHashable UTCTime where
     updateHash (UTCTime d dt) = updateHash d >> updateHash dt

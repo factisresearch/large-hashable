@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE CPP           #-}
 {-# LANGUAGE DeriveGeneric #-}
 module Data.LargeHashable.Tests.Helper where
