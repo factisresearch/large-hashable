@@ -220,3 +220,9 @@ instance (Arbitrary a, Arbitrary b) => Arbitrary (Tuple.Pair a b) where
         do x <- arbitrary
            y <- arbitrary
            return (x Tuple.:!: y)
+
+instance Arbitrary Word128 where
+    arbitrary = Word128 <$> arbitrary <*> arbitrary
+
+instance Arbitrary Word256 where
+    arbitrary = Word256 <$> arbitrary <*> arbitrary

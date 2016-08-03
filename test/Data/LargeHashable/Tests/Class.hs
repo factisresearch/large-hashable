@@ -7,7 +7,6 @@ import Data.Fixed
 import Data.Hashable
 import Data.Int
 import Data.LargeHashable
-import Data.LargeHashable.MD5
 import Data.LargeHashable.Tests.Helper
 import Data.Map (Map ())
 import Data.Ratio

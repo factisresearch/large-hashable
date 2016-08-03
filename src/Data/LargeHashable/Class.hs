@@ -10,7 +10,6 @@ module Data.LargeHashable.Class (
 ) where
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
-import Control.Monad
 import Data.Bits
 import Data.Fixed
 import Data.Foldable
@@ -93,11 +92,8 @@ class LargeHashable' t where
 -- | 'largeHash' is the central function of this package.
 --   For a given value it computes a 'Hash' using the given
 --   'HashAlgorithm'.
-largeHash :: LargeHashable a => HashAlgorithm -> a -> Hash
+largeHash :: LargeHashable a => HashAlgorithm h -> a -> h
 largeHash algo x = runLH algo (updateHash x)
-
-instance LargeHashable Hash where
-    updateHash (Hash h) = updateHash h
 
 {-# INLINE updateHashTextData #-}
 updateHashTextData :: T.Text -> LH ()
@@ -305,16 +301,8 @@ updateHashHashSet !set =
 
 hashListModuloOrdering :: LargeHashable a => Int -> [a] -> LH ()
 hashListModuloOrdering len list =
-    do mh <- foldM fun Nothing list
-       updateHash mh
+    do updateXorHash (map updateHash list)
        updateHash len
-    where
-      fun acc a =
-          do h <- subLargeHash (updateHash a)
-             case acc of
-               Nothing -> return $ Just h
-               Just oldH -> return $ Just (oldH `xorHash` h)
-
 
 -- Lazy and Strict HashSet share the same definition
 instance LargeHashable a => LargeHashable (HashSet.HashSet a) where

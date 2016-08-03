@@ -6,7 +6,7 @@ import Data.LargeHashable.Class
 import Data.Bytes.Put
 import Data.Bytes.Serial
 
-serialLargeHash :: Serial a => HashAlgorithm -> a -> Hash
+serialLargeHash :: Serial a => HashAlgorithm h -> a -> h
 serialLargeHash algo a = runLH algo $ serialize a
 
 instance MonadPut LH where
