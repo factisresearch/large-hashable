@@ -103,7 +103,7 @@ deriveLargeHashableCustomCtx tyName extraPreds =
                  "Unexpected declarations returned by deriveLargeHashable: " ++ show (ppr decs)
     where
       collectArgs :: Type -> [Type]
-      collectArgs ty =
+      collectArgs outerTy =
           let loop ty =
                   case ty of
                     (AppT l r) ->
@@ -111,7 +111,7 @@ deriveLargeHashableCustomCtx tyName extraPreds =
                           AppT _ _ -> r : loop l
                           _ -> [r]
                     _ -> []
-          in case ty of
+          in case outerTy of
                AppT _ r -> loop r
                _ -> []
 
