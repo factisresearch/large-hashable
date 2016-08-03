@@ -13,6 +13,7 @@ import Data.Serialize.Put
 import System.Environment
 import System.Exit
 import qualified Data.LargeHashable.Benchmarks.CryptoHash as CH
+import qualified Data.LargeHashable.Benchmarks.Serial as Serial
 import qualified Data.LargeHashable as LH
 import qualified Data.Bytes.Serial as S
 
@@ -59,7 +60,7 @@ mkPatList n =
           }
 
 _NUM_ :: Int
-_NUM_ = 100000
+_NUM_ = 1000000
 
 patList :: [Patient]
 patList = mkPatList _NUM_
@@ -95,7 +96,7 @@ hashSerial :: IO ()
 hashSerial =
     do let !l = patList
        putStrLn ("Generated " ++ show (length l) ++ " patients")
-       let !hash = LH.serialLargeHash LH.md5HashAlgorithm l
+       let !hash = Serial.serialLargeHash LH.md5HashAlgorithm l
        putStrLn ("Hash: " ++ show hash)
 
 main :: IO ()
@@ -106,7 +107,7 @@ main =
          ["safecopy"] -> hashSafeCopy
          ["cryptohash"] ->  hashCryptoHash
          ["large-hashable"] -> hashLargeHashable
-         ["serial"] -> hashSerial
+         ["large-hashable-serial"] -> hashSerial
          _ ->
              do putStrLn ("invalid arguments: " ++ show args)
                 exitWith (ExitFailure 1)

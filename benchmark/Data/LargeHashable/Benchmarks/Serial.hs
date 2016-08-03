@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Data.LargeHashable.Serial (serialLargeHash) where
+module Data.LargeHashable.Benchmarks.Serial (serialLargeHash) where
 
 import Data.LargeHashable.Intern
 import Data.LargeHashable.Class

@@ -22,9 +22,9 @@ library
                      , Data.LargeHashable.Class
                      , Data.LargeHashable.MD5
                      , Data.LargeHashable.Intern
-                     , Data.LargeHashable.Serial
                      , Data.LargeHashable.TH
-  build-depends:       base
+  build-depends:       aeson
+                     , base
                      , text
                      , bytestring
                      , transformers
@@ -32,24 +32,30 @@ library
                      , bytes
                      , containers
                      , unordered-containers
+                     , scientific
+                     , strict
                      , time
                      , template-haskell
+                     , utf8-light
+                     , vector
+                     , void
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
-                       -fwarn-missing-signatures
+                       -pgmPcpphs -optP--cpp -rtsopts -threaded
+                       -fwarn-missing-signatures -Werror -O2
 
 executable large-hashable-benchmark
   hs-source-dirs:      benchmark
   main-is:             Main.hs
   other-modules:       Data.LargeHashable.Benchmarks.CryptoHash
                      , Data.LargeHashable.Benchmarks.Main
+                     , Data.LargeHashable.Benchmarks.Serial
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
-                       -fwarn-missing-signatures
+                       -fwarn-missing-signatures -Werror -O2
   build-depends:       base
                      , large-hashable
                      , safecopy
@@ -67,23 +73,30 @@ test-suite large-hashable-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Main.hs
-  build-depends:       base
-                     , large-hashable
+  build-depends:       aeson
                      , HTF
                      , QuickCheck
-                     , text
+                     , base
                      , bytes
                      , bytestring
                      , containers
-                     , unordered-containers
                      , hashable
+                     , large-hashable
+                     , scientific
+                     , strict
+                     , text
+                     , time
+                     , unordered-containers
+                     , vector
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
-                       -fwarn-missing-signatures
+                       -fwarn-missing-signatures -Werror
   default-language:    Haskell2010
-
+  other-modules:       Data.LargeHashable.Tests.Class
+                     , Data.LargeHashable.Tests.Helper
+                     , Data.LargeHashable.Tests.TH
 source-repository head
   type:     git
   location: https://github.com/factisresearch/large-hashable

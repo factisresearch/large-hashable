@@ -5,17 +5,19 @@
 --   Normal users shoud import this module.
 module Data.LargeHashable (
    LargeHashable(..)
+ , LargeHashable'(..)
  , LH
  , Hash(..)
  , HashAlgorithm
  , largeHash
- , serialLargeHash
  , md5HashAlgorithm
  , deriveLargeHashable
+ , deriveLargeHashableNoCtx
+ , deriveLargeHashableCtx
+ , deriveLargeHashableCustomCtx
 ) where
 
 import Data.LargeHashable.Class
 import Data.LargeHashable.Intern
 import Data.LargeHashable.MD5
-import Data.LargeHashable.Serial
 import Data.LargeHashable.TH

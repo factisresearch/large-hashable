@@ -5,64 +5,99 @@
 {-# LANGUAGE FlexibleContexts  #-}
 module Data.LargeHashable.Class (
 
-    LargeHashable(..), largeHash
+    LargeHashable(..), largeHash, LargeHashable'(..)
 
 ) where
 
+-- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
+import Control.Monad
+import Data.Bits
+import Data.Fixed
+import Data.Foldable
+import Data.Int
 import Data.LargeHashable.Intern
-import Data.Char (ord)
+import Data.Ratio
+import Data.Time
+import Data.Time.Clock.TAI
+import Data.Void (Void)
+import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import GHC.Generics
-import Data.Foldable
-import Data.Word
-import Data.Int
-import Data.Bits
-import Data.Ratio
-import Data.Fixed
-import qualified Data.Text as T
-import qualified Data.Text.Foreign as TF
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Internal.Lazy as TLI
+import qualified Codec.Binary.UTF8.Light as Utf8
+import qualified Data.Aeson as J
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Short as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
-import qualified Data.Set as S
-import qualified Data.IntSet as IntSet
-import qualified Data.HashSet as HashSet
-import qualified Data.Map as M
-import qualified Data.IntMap as IntMap
+import qualified Data.ByteString.Short as BS
+import qualified Data.Foldable as F
 import qualified Data.HashMap.Lazy as HashMap
-import Data.Time
-import Data.Time.Clock.TAI
+import qualified Data.HashSet as HashSet
+import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
+import qualified Data.Map as M
+import qualified Data.Scientific as Sci
+import qualified Data.Sequence as Seq
+import qualified Data.Set as S
+import qualified Data.Strict.Tuple as Tuple
+import qualified Data.Text as T
+import qualified Data.Text.Foreign as TF
+import qualified Data.Text.Internal.Lazy as TLI
+import qualified Data.Text.Lazy as TL
+import qualified Data.Vector as V
 
 -- | A type class for computing hashes (i.e. MD5, SHA256, ...) from
 -- haskell values.
 --
--- Important: when implementing `LargeHashable` for your custom datatype,
--- make sure to hash all information present in the datatype. Otherwise,
--- unncessary hash collisions arise. A rule of thumb: hash all
--- information that you would also need for serializing/deserializing
--- values of your datatype.
+-- The laws of this typeclass are the following:
 --
--- The law of this typeclass is the following: If two values are equal
+-- (1) If two values are equal
 -- according to '==', then the finally computed hashes must also be equal
 -- according to '=='. However it is not required that the hashes of inequal
 -- values have to be inequal. Also note that an instance of 'LargeHashable'
 -- does not require a instance of 'Eq'. Using any sane algorithm the chance
 -- of a collision should be 1 / n where n is the number of different hashes
 -- possible.
+--
+-- (2) If two values are inequal
+-- according to '==', then the probability of a hash collision should
+-- be 1/n, where n is the number of possible hashes produced by the
+-- underlying hash algorithm.
+--
+-- A rule of thumb: hash all information that you would also need for
+-- serializing/deserializing values of your datatype. For instance, when
+-- hashing lists, you would not only hash the list elements but also the
+-- length of the list. Consider the following datatype
+--
+-- > data Foo = Foo [Int] [Int]
+--
+-- We now write an instance for LargeHashable like this
+--
+-- > instance LargeHashable Foo where
+-- >     updateHash (Foo l1 l2) = updateHash l1 >> updateHash l2
+--
+-- If we did not hash the length of a list, then the following two values
+-- of @Foo@ would produce identical hashes:
+--
+-- > Foo [1,2,3] []
+-- > Foo [1] [2,3]
+--
 class LargeHashable a where
     updateHash :: a -> LH ()
-    default updateHash :: (LargeHashable' (Rep a), Generic a) => a -> LH ()
-    updateHash = updateHash' . from
+    default updateHash :: (GenericLargeHashable (Rep a), Generic a) => a -> LH ()
+    updateHash = updateHashGeneric . from
+
+class LargeHashable' t where
+    updateHash' :: LargeHashable a => t a -> LH ()
 
 -- | 'largeHash' is the central function of this package.
 --   For a given value it computes a 'Hash' using the given
 --   'HashAlgorithm'.
 largeHash :: LargeHashable a => HashAlgorithm -> a -> Hash
 largeHash algo x = runLH algo (updateHash x)
+
+instance LargeHashable Hash where
+    updateHash (Hash h) = updateHash h
 
 {-# INLINE updateHashTextData #-}
 updateHashTextData :: T.Text -> LH ()
@@ -124,63 +159,78 @@ instance LargeHashable BL.ByteString where
 instance LargeHashable BS.ShortByteString where
     updateHash = updateHash . BS.fromShort
 
-{-# INLINE updateHashBoundedIntegral #-}
--- Note: This only works if a's bounds are smaller or
---       equal to CULong's bounds
-updateHashBoundedIntegral :: (Bounded a, Integral a) => a -> LH ()
-updateHashBoundedIntegral !i = do
-    updates <- hashUpdates
-    ioInLH $ hu_updateULong updates (fromIntegral i)
+{-# INLINE updateHashWithFun #-}
+updateHashWithFun :: (HashUpdates -> a -> IO ()) -> a -> LH ()
+updateHashWithFun f x =
+    do updates <- hashUpdates
+       ioInLH $ f updates x
 
 instance LargeHashable Int where
-    updateHash = updateHashBoundedIntegral
+    updateHash i = updateHashWithFun hu_updateLong (fromIntegral i)
 
 instance LargeHashable Int8 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateChar . CChar
 
 instance LargeHashable Int16 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateShort . CShort
 
 instance LargeHashable Int32 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateInt . CInt
 
 instance LargeHashable Int64 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateLong . CLong
 
 instance LargeHashable Word where
-    updateHash = updateHashBoundedIntegral
+    updateHash i = updateHashWithFun hu_updateLong (fromIntegral i)
 
 instance LargeHashable Word8 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateUChar . CUChar
 
 instance LargeHashable Word16 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateUShort . CUShort
 
 instance LargeHashable Word32 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateUInt . CUInt
 
 instance LargeHashable Word64 where
-    updateHash = updateHashBoundedIntegral
+    updateHash = updateHashWithFun hu_updateULong . CULong
 
-instance LargeHashable Char where
-    -- TODO: ord can't be used for 100% of unicode
-    --       characters since it uses int.
-    --       We could remove this limitation through
-    --       a dependency to utf8-light.
-    updateHash = updateHash . ord
+instance LargeHashable CChar where
+    updateHash = updateHashWithFun hu_updateChar
+
+instance LargeHashable CShort where
+    updateHash = updateHashWithFun hu_updateShort
+
+instance LargeHashable CInt where
+    updateHash = updateHashWithFun hu_updateInt
+
+instance LargeHashable CLong where
+    updateHash = updateHashWithFun hu_updateLong
+
+instance LargeHashable CUChar where
+    updateHash = updateHashWithFun hu_updateUChar
+
+instance LargeHashable CUShort where
+    updateHash = updateHashWithFun hu_updateUShort
+
+instance LargeHashable CUInt where
+    updateHash = updateHashWithFun hu_updateUInt
 
 instance LargeHashable CULong where
-    updateHash l = hashUpdates >>= \hu -> ioInLH $ hu_updateULong hu l
+    updateHash = updateHashWithFun hu_updateULong
+
+instance LargeHashable Char where
+    updateHash = updateHashWithFun hu_updateUInt . CUInt . Utf8.c2w
 
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()
 updateHashInteger !i
-    | i == 0 = updateHash (0 :: CULong)
+    | i == 0 = updateHash (0 :: CUChar)
     | i > 0  = do
         updateHash (fromIntegral (i .&. 0xffffffffffffffff) :: CULong)
         updateHashInteger (shift i (-64))
     | otherwise = do
-        updateHash (0 :: CULong) -- prepend 0 to show it is negative
+        updateHash (0 :: CUChar) -- prepend 0 to show it is negative
         updateHashInteger (abs i)
 
 instance LargeHashable Integer where
@@ -205,8 +255,8 @@ instance HasResolution a => LargeHashable (Fixed a) where
 
 {-# INLINE updateHashBool #-}
 updateHashBool :: Bool -> LH ()
-updateHashBool True  = updateHash (1 :: CULong)
-updateHashBool False = updateHash (0 :: CULong)
+updateHashBool True  = updateHash (1 :: CUChar)
+updateHashBool False = updateHash (0 :: CUChar)
 
 instance LargeHashable Bool where
     updateHash = updateHashBool
@@ -232,7 +282,7 @@ setFoldFun action value = action >> updateHash value
 {-# INLINE updateHashSet #-}
 updateHashSet :: LargeHashable a => S.Set a -> LH ()
 updateHashSet !set = do
-    foldl' setFoldFun (return ()) set
+    foldl' setFoldFun (return ()) set -- Note: foldl' for sets traverses the elements in asc order
     updateHash (S.size set)
 
 instance LargeHashable a => LargeHashable (S.Set a) where
@@ -250,9 +300,21 @@ instance LargeHashable IntSet.IntSet where
 
 {-# INLINE updateHashHashSet #-}
 updateHashHashSet :: LargeHashable a => HashSet.HashSet a -> LH ()
-updateHashHashSet !set = do
-    HashSet.foldl' setFoldFun (return ()) set
-    updateHash (HashSet.size set)
+updateHashHashSet !set =
+    hashListModuloOrdering (HashSet.size set) (HashSet.toList set)
+
+hashListModuloOrdering :: LargeHashable a => Int -> [a] -> LH ()
+hashListModuloOrdering len list =
+    do mh <- foldM fun Nothing list
+       updateHash mh
+       updateHash len
+    where
+      fun acc a =
+          do h <- subLargeHash (updateHash a)
+             case acc of
+               Nothing -> return $ Just h
+               Just oldH -> return $ Just (oldH `xorHash` h)
+
 
 -- Lazy and Strict HashSet share the same definition
 instance LargeHashable a => LargeHashable (HashSet.HashSet a) where
@@ -283,9 +345,8 @@ instance LargeHashable a => LargeHashable (IntMap.IntMap a) where
     updateHash = updateHashIntMap
 
 updateHashHashMap :: (LargeHashable k, LargeHashable v) => HashMap.HashMap k v -> LH ()
-updateHashHashMap !m = do
-    HashMap.foldlWithKey' mapFoldFun (return ()) m
-    updateHash (HashMap.size m)
+updateHashHashMap !m =
+    hashListModuloOrdering (HashMap.size m) (HashMap.toList m)
 
 -- Lazy and Strict HashMap share the same definition
 instance (LargeHashable k, LargeHashable v) => LargeHashable (HashMap.HashMap k v) where
@@ -364,7 +425,8 @@ instance LargeHashable TimeOfDay where
     updateHash (TimeOfDay h m s) = updateHash h >> updateHash m >> updateHash s
 
 instance LargeHashable TimeZone where
-    updateHash (TimeZone mintz summerOnly name) = updateHash mintz >> updateHash summerOnly >> updateHash name
+    updateHash (TimeZone mintz summerOnly name) =
+        updateHash mintz >> updateHash summerOnly >> updateHash name
 
 instance LargeHashable UTCTime where
     updateHash (UTCTime d dt) = updateHash d >> updateHash dt
@@ -375,29 +437,73 @@ instance LargeHashable Day where
 instance LargeHashable UniversalTime where
     updateHash (ModJulianDate d) = updateHash d
 
-class LargeHashable' f where
-    updateHash' :: f p -> LH ()
+instance LargeHashable a => LargeHashable (V.Vector a) where
+    updateHash = updateHash . V.toList
 
-instance LargeHashable' V1 where
-    updateHash' = undefined
+instance (LargeHashable a, LargeHashable b) => LargeHashable (Tuple.Pair a b) where
+    updateHash (x Tuple.:!: y) =
+        do updateHash x
+           updateHash y
 
-instance LargeHashable' U1 where
-    updateHash' _ = updateHash ()
+instance LargeHashable Sci.Scientific where
+    updateHash notNormalized =
+        do let n = Sci.normalize notNormalized
+           updateHash (Sci.coefficient n)
+           updateHash (Sci.base10Exponent n)
 
-instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :+: g) where
-    updateHash' (L1 x) = do
+instance LargeHashable J.Value where
+    updateHash v =
+        case v of
+          J.Object obj ->
+              do updateHash (0::Int)
+                 updateHash obj
+          J.Array arr ->
+              do updateHash (1::Int)
+                 updateHash arr
+          J.String t ->
+              do updateHash (2::Int)
+                 updateHash t
+          J.Number n ->
+              do updateHash (3::Int)
+                 updateHash n
+          J.Bool b ->
+              do updateHash (4::Int)
+                 updateHash b
+          J.Null ->
+              updateHash (5::Int)
+
+instance LargeHashable Void where
+    updateHash _ = error "I'm void"
+
+instance LargeHashable a => LargeHashable (Seq.Seq a) where
+    updateHash = updateHash . F.toList
+
+-- | Support for generically deriving 'LargeHashable' instances.
+-- Any instance of the type class 'GHC.Generics.Generic' can be made
+-- an instance of 'LargeHashable' by an empty instance declaration.
+class GenericLargeHashable f where
+    updateHashGeneric :: f p -> LH ()
+
+instance GenericLargeHashable V1 where
+    updateHashGeneric = undefined
+
+instance GenericLargeHashable U1 where
+    updateHashGeneric _ = updateHash ()
+
+instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :+: g) where
+    updateHashGeneric (L1 x) = do
         updateHash (0 :: CULong) -- is left
-        updateHash' x
-    updateHash' (R1 x) = do
+        updateHashGeneric x
+    updateHashGeneric (R1 x) = do
         updateHash (1 :: CULong) -- is right
-        updateHash' x
+        updateHashGeneric x
 
-instance (LargeHashable' f, LargeHashable' g) => LargeHashable' (f :*: g) where
-    updateHash' (x :*: y) = updateHash' x >> updateHash' y
+instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :*: g) where
+    updateHashGeneric (x :*: y) = updateHashGeneric x >> updateHashGeneric y
 
-instance LargeHashable c => LargeHashable' (K1 i c) where
-    updateHash' (K1 x) = updateHash x
+instance LargeHashable c => GenericLargeHashable (K1 i c) where
+    updateHashGeneric (K1 x) = updateHash x
 
 -- ignore meta-info (for now)
-instance (LargeHashable' f) => LargeHashable' (M1 i t f) where
-      updateHash' (M1 x) = updateHash' x
+instance (GenericLargeHashable f) => GenericLargeHashable (M1 i t f) where
+      updateHashGeneric (M1 x) = updateHashGeneric x

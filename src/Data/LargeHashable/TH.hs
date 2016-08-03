@@ -1,8 +1,11 @@
 {-# LANGUAGE QuasiQuotes     #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Data.LargeHashable.TH (
-    deriveLargeHashable
-    ) where
+
+    deriveLargeHashable, deriveLargeHashableCtx, deriveLargeHashableNoCtx
+  , deriveLargeHashableCustomCtx
+
+) where
 
 import Data.LargeHashable.Class
 import Language.Haskell.TH
@@ -58,6 +61,59 @@ deriveLargeHashable n = reify n >>= \info ->
                     buildInstance (foldl AppT (ConT name) types) context [] [con]
                 _ -> fail $ notDeriveAbleErrorMsg n info
         _ -> fail $ notDeriveAbleErrorMsg n info
+
+-- | Derive a 'LargeHashable' instance with extra constraints in the
+-- context of the instance.
+deriveLargeHashableCtx ::
+       Name
+    -> ([TypeQ] -> [PredQ])
+       -- ^ Function mapping the type variables in the instance head to the additional constraints
+    -> Q [Dec]
+deriveLargeHashableCtx tyName extraPreds =
+    deriveLargeHashableCustomCtx tyName mkCtx
+    where
+      mkCtx args oldCtx =
+          oldCtx ++ extraPreds args
+
+-- | Derive a 'LargeHashable' instance with no constraints in the context of the instance.
+deriveLargeHashableNoCtx ::
+       Name
+    -> (Q [Dec])
+deriveLargeHashableNoCtx tyName =
+    deriveLargeHashableCustomCtx tyName (\_ _ -> [])
+
+-- | Derive a 'LargeHashable' instance with a completely custom instance context.
+deriveLargeHashableCustomCtx ::
+       Name
+    -> ([TypeQ] -> [PredQ] -> [PredQ])
+       -- ^ Function mapping the type variables in the instance head and the
+       -- constraints that would normally be generated to the constraints
+       -- that should be generated.
+    -> (Q [Dec])
+deriveLargeHashableCustomCtx tyName extraPreds =
+    do decs <- deriveLargeHashable tyName
+       case decs of
+         (InstanceD ctx ty body : _) ->
+             do let args = reverse (collectArgs ty)
+                newCtx <- sequence (extraPreds (map return args) (map return ctx))
+                -- _ <- fail ("args: " ++ show args ++", ty: " ++ show ty)
+                return [InstanceD newCtx ty body]
+         _ ->
+             error $
+                 "Unexpected declarations returned by deriveLargeHashable: " ++ show (ppr decs)
+    where
+      collectArgs :: Type -> [Type]
+      collectArgs ty =
+          let loop ty =
+                  case ty of
+                    (AppT l r) ->
+                        case l of
+                          AppT _ _ -> r : loop l
+                          _ -> [r]
+                    _ -> []
+          in case ty of
+               AppT _ r -> loop r
+               _ -> []
 
 -- | Generates the error message displayed when somebody tries to let us
 --   derive impossible instances!
@@ -123,7 +179,14 @@ sequenceExps first second = infixE (Just first) (varE '(>>)) (Just second)
 --   the type has.
 makeConstraints :: Cxt -> [TyVarBndr] -> Q Cxt
 makeConstraints context vars = return $ context ++
-    map (\v -> (ConT ''LargeHashable) `AppT` (VarT . varName $ v)) vars
+    map (\v -> (ConT (toLargeHashableClass v)) `AppT` (VarT . varName $ v)) vars
+    where
+      toLargeHashableClass :: TyVarBndr -> Name
+      toLargeHashableClass var =
+        case var of
+          (PlainTV _) -> ''LargeHashable
+          (KindedTV _ (AppT (AppT ArrowT StarT) StarT)) -> ''LargeHashable'
+          (KindedTV _ _) -> ''LargeHashable
 
 -- | Returns the 'Name' for a type variable.
 varName :: TyVarBndr -> Name

@@ -38,6 +38,13 @@ struct md5_ctx
 
 void md5_init(struct md5_ctx *ctx);
 void md5_update(struct md5_ctx *ctx, uint8_t *data, uint32_t len);
+void md5_update_char(struct md5_ctx *ctx, char data);
+void md5_update_uchar(struct md5_ctx *ctx, unsigned char data);
+void md5_update_short(struct md5_ctx *ctx, short data);
+void md5_update_ushort(struct md5_ctx *ctx, unsigned short data);
+void md5_update_int(struct md5_ctx *ctx, int data);
+void md5_update_uint(struct md5_ctx *ctx, unsigned int data);
+void md5_update_long(struct md5_ctx *ctx, long data);
 void md5_update_ulong(struct md5_ctx *ctx, unsigned long data);
 void md5_finalize(struct md5_ctx *ctx, uint8_t *out);
 

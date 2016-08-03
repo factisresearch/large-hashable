@@ -41,7 +41,6 @@ updateFromBuilder :: HashCtx -> B.Builder -> HashCtx
 updateFromBuilder (HashCtx ctx) builder =
     HashCtx (H.hashUpdates ctx (BSL.toChunks (B.toLazyByteString builder)))
 
-{-# SPECIALIZE hashUpdate :: HashCtx -> T.Text -> HashCtx #-}
 class LargeHashable a where
     hashUpdate :: HashCtx -> a -> HashCtx
 
