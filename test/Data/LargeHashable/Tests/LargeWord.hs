@@ -15,3 +15,10 @@ prop_conversionFromAndToWord128 h128 = h128 == bsToW128 (w128ToBs h128)
 
 prop_conversionFromAndToWord256 :: Word256 -> Bool
 prop_conversionFromAndToWord256 h256 = h256 == bsToW256 (w256ToBs h256)
+
+test_bsToW128 :: IO ()
+test_bsToW128 =
+    do assertEqual (Word128 0 0) (bsToW128 BS.empty)
+       assertEqual (bsToW128 (BS.pack ([0,0,0,0,0,0,0,1] ++ replicate 8 0))) (bsToW128 (BS.pack [1]))
+       assertEqual (bsToW128 (BS.pack ([1,2,3,4,5,6,7,8,0,0,0,0,0,0,0,9])))
+           (bsToW128 (BS.pack [1,2,3,4,5,6,7,8,9]))

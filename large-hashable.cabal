@@ -44,9 +44,10 @@ library
   ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -fno-warn-name-shadowing
-                       -fwarn-missing-signatures -Werror -O2
+                       -fwarn-missing-signatures -O2
 
-executable large-hashable-benchmark
+benchmark large-hashable-benchmark
+  type:                exitcode-stdio-1.0
   hs-source-dirs:      benchmark
   main-is:             Main.hs
   other-modules:       Data.LargeHashable.Benchmarks.CryptoHash
@@ -56,7 +57,7 @@ executable large-hashable-benchmark
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
-                       -fwarn-missing-signatures -fno-warn-name-shadowing -Werror -O2
+                       -fwarn-missing-signatures -fno-warn-name-shadowing -O2
   build-depends:       base
                      , base16-bytestring
                      , large-hashable
@@ -94,11 +95,13 @@ test-suite large-hashable-test
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
-                       -fwarn-missing-signatures -fno-warn-name-shadowing -Werror
+                       -fwarn-missing-signatures -fno-warn-name-shadowing
   default-language:    Haskell2010
   other-modules:       Data.LargeHashable.Tests.Class
                      , Data.LargeHashable.Tests.Helper
                      , Data.LargeHashable.Tests.TH
+                     , Data.LargeHashable.Tests.LargeWord
+
 source-repository head
   type:     git
   location: https://github.com/factisresearch/large-hashable

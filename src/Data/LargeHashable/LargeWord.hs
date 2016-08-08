@@ -1,9 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+-- | Efficient representation for small bytearrays with 128 or 256 bits.
 module Data.LargeHashable.LargeWord
     ( Word128(..), Word256(..)
-    , fromWord8, toWord8
-    , bsToW64, w64ToBs
     , bsToW128, w128ToBs
     , bsToW256, w256ToBs
     , xorW128, xorW256
@@ -32,14 +31,8 @@ data Word256
     }
     deriving (Show, Read, Eq, Ord, Typeable, Generic, Data)
 
-fromWord8 :: Integral a => Word8 -> a
-fromWord8 = fromIntegral
-
-toWord8 :: (Show a, Integral a) => a -> Word8
-toWord8 i
-    | i > 255 || i < 0 = error ("toWord8: not in range " ++ show i)
-    | otherwise = fromIntegral i
-
+-- | Converts a 'ByteString' into a 'Word256'. Only the first 32 bytes
+-- are taken into account, the rest is ignored.
 bsToW256 :: BS.ByteString -> Word256
 bsToW256 bs = Word256 first128 next128
     where
@@ -50,6 +43,8 @@ w256ToBs :: Word256 -> BS.ByteString
 w256ToBs (Word256 first128 next128) =
     w128ToBs first128 `BS.append` w128ToBs next128
 
+-- | Converts a 'ByteString' into a 'Word128'. Only the first 16 bytes
+-- are taken into account, the rest is ignored.
 bsToW128 :: BS.ByteString -> Word128
 bsToW128 bs = Word128 first64 next64
     where

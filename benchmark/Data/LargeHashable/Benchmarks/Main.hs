@@ -11,7 +11,6 @@ import Control.DeepSeq
 import GHC.Generics
 import Data.Serialize.Put
 import System.Environment
-import System.Exit
 import qualified Data.LargeHashable.Benchmarks.CryptoHash as CH
 import qualified Data.LargeHashable.Benchmarks.Serial as Serial
 import qualified Data.LargeHashable as LH
@@ -108,6 +107,4 @@ main =
          ["cryptohash"] ->  hashCryptoHash
          ["large-hashable"] -> hashLargeHashable
          ["large-hashable-serial"] -> hashSerial
-         _ ->
-             do putStrLn ("invalid arguments: " ++ show args)
-                exitWith (ExitFailure 1)
+         _ -> hashLargeHashable

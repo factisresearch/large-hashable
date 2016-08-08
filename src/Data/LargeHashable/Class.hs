@@ -59,8 +59,8 @@ import qualified Data.Vector as V
 -- possible.
 --
 -- (2) If two values are inequal
--- according to '==', then the probability of a hash collision should
--- be 1/n, where n is the number of possible hashes produced by the
+-- according to '==', then the probability of a hash collision is 1/n,
+-- where n is the number of possible hashes produced by the
 -- underlying hash algorithm.
 --
 -- A rule of thumb: hash all information that you would also need for
@@ -297,8 +297,13 @@ instance LargeHashable IntSet.IntSet where
 {-# INLINE updateHashHashSet #-}
 updateHashHashSet :: LargeHashable a => HashSet.HashSet a -> LH ()
 updateHashHashSet !set =
+    -- The ordering of elements in a set does not matter. A HashSet does not
+    -- offer an efficient way of exctracting its elements in some specific
+    -- ordering. So we use the auxiliary function 'hashListModuloOrdering'.
     hashListModuloOrdering (HashSet.size set) (HashSet.toList set)
 
+-- | Hashes a list of values such the two permutations of the same list
+-- yields the same hash.
 hashListModuloOrdering :: LargeHashable a => Int -> [a] -> LH ()
 hashListModuloOrdering len list =
     do updateXorHash (map updateHash list)
@@ -334,6 +339,9 @@ instance LargeHashable a => LargeHashable (IntMap.IntMap a) where
 
 updateHashHashMap :: (LargeHashable k, LargeHashable v) => HashMap.HashMap k v -> LH ()
 updateHashHashMap !m =
+    -- The ordering of elements in a map do not matter. A HashMap does not
+    -- offer an efficient way of exctracting its elements in some specific
+    -- ordering. So we use the auxiliary function 'hashListModuloOrdering'.
     hashListModuloOrdering (HashMap.size m) (HashMap.toList m)
 
 -- Lazy and Strict HashMap share the same definition
