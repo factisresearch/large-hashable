@@ -1,6 +1,6 @@
 name:                large-hashable
 version:             0.1.0.0
-synopsis:            Efficiently hash Haskell values with MD5, SHA256, SHA512 and other hashing algorithms
+synopsis:            Efficiently hash (large) Haskell values
 description:         Please see README.md
 homepage:            https://github.com/factisresearch/large-hashable
 license:             BSD3
@@ -27,7 +27,7 @@ library
                      , Data.LargeHashable.LargeWord
                      , Data.LargeHashable.TH
   build-depends:       aeson
-                     , base
+                     , base >= 4.8 && < 5
                      , text
                      , bytestring
                      , transformers
@@ -45,7 +45,7 @@ library
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -pgmPcpphs -optP--cpp -rtsopts -threaded -fno-warn-name-shadowing
+                       -pgmPcpphs -optP--cpp -fno-warn-name-shadowing
                        -fwarn-missing-signatures -O2
 
 benchmark large-hashable-benchmark
@@ -60,7 +60,7 @@ benchmark large-hashable-benchmark
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures -fno-warn-name-shadowing -O2
-  build-depends:       base
+  build-depends:       base >= 4.8 && < 5
                      , base16-bytestring
                      , large-hashable
                      , safecopy
@@ -81,7 +81,7 @@ test-suite large-hashable-test
   build-depends:       aeson
                      , HTF
                      , QuickCheck
-                     , base
+                     , base >= 4.8 && < 5
                      , bytes
                      , bytestring
                      , containers
