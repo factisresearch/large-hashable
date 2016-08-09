@@ -2,17 +2,19 @@
 {-# LANGUAGE MagicHash #-}
 module Data.LargeHashable.Benchmarks.CryptoHash where
 
-import Data.LargeHashable.Intern (Hash(..))
-import qualified Crypto.Hash as H
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy as BSL
-import qualified Data.ByteString.Builder as B
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+-- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
+import Data.Bits
 import Data.Byteable
 import Data.List (foldl')
 import Data.Word
-import Data.Bits
+import qualified Crypto.Hash as H
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Base16 as Base16
+import qualified Data.ByteString.Builder as B
+import qualified Data.ByteString.Char8 as BSC
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 
 data HashAlgorithm
     = MD5
@@ -21,6 +23,13 @@ data HashAlgorithm
       deriving (Eq, Show)
 
 data HashCtx = forall h . H.HashAlgorithm h => HashCtx !(H.Context h)
+
+newtype Hash = Hash { unHash :: BS.ByteString }
+    deriving (Eq)
+
+instance Show Hash where
+    show (Hash bs) =
+        BSC.unpack (Base16.encode bs)
 
 hashMd5 :: LargeHashable h => h -> Hash
 hashMd5 h =
@@ -41,7 +50,6 @@ updateFromBuilder :: HashCtx -> B.Builder -> HashCtx
 updateFromBuilder (HashCtx ctx) builder =
     HashCtx (H.hashUpdates ctx (BSL.toChunks (B.toLazyByteString builder)))
 
-{-# SPECIALIZE hashUpdate :: HashCtx -> T.Text -> HashCtx #-}
 class LargeHashable a where
     hashUpdate :: HashCtx -> a -> HashCtx
 

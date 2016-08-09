@@ -1,10 +1,22 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-    echo "USAGE: $0 BENCHMARK_NAME"
+if [ -z "$1" -o "$1" == "--help" ]; then
+    echo "USAGE: $0 [--heap] BENCHMARK_NAME"
     exit 1
 fi
 
-stack build --enable-executable-profiling --enable-library-profiling --ghc-options=-fprof-auto
+prof=time
+if [ "$1" == "--heap" ]; then
+    prof=heap
+    shift
+fi
+
+stack build --executable-profiling --library-profiling --ghc-options=-fprof-auto
+
 exe=$(stack exec -- which large-hashable-benchmark)
-$exe $1 +RTS -p
+
+if [ "$prof" == "time" ]; then
+    $exe $1 +RTS -p
+else
+    $exe $1 +RTS -hd
+fi
