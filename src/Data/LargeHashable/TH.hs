@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP             #-}
 {-# LANGUAGE QuasiQuotes     #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Data.LargeHashable.TH (
@@ -48,16 +49,33 @@ deriveLargeHashable n = reify n >>= \info ->
     case info of
         TyConI dec ->
             case dec of
+#if MIN_VERSION_template_haskell(2,11,0)
+                DataD context name tyvars _ cons _ ->
+#else
                 DataD context name tyvars cons _ ->
+#endif
                     buildInstance (ConT name) context tyvars cons
+
+#if MIN_VERSION_template_haskell(2,11,0)
+                NewtypeD context name tyvars _ con _  ->
+#else
                 NewtypeD context name tyvars con _  ->
+#endif
                     buildInstance (ConT name) context tyvars [con]
                 _ -> fail $ notDeriveAbleErrorMsg n info
         FamilyI _ instDecs -> fmap concat $ forM instDecs $ \instDec ->
             case instDec of
+#if MIN_VERSION_template_haskell(2,11,0)
+                DataInstD context name types _ cons _ ->
+#else
                 DataInstD context name types cons _ ->
+#endif
                     buildInstance (foldl AppT (ConT name) types) context [] cons
+#if MIN_VERSION_template_haskell(2,11,0)
+                NewtypeInstD context name types _ con _ ->
+#else
                 NewtypeInstD context name types con _ ->
+#endif
                     buildInstance (foldl AppT (ConT name) types) context [] [con]
                 _ -> fail $ notDeriveAbleErrorMsg n info
         _ -> fail $ notDeriveAbleErrorMsg n info
@@ -93,11 +111,19 @@ deriveLargeHashableCustomCtx ::
 deriveLargeHashableCustomCtx tyName extraPreds =
     do decs <- deriveLargeHashable tyName
        case decs of
+#if MIN_VERSION_template_haskell(2,11,0)
+         (InstanceD overlap ctx ty body : _) ->
+#else
          (InstanceD ctx ty body : _) ->
+#endif
              do let args = reverse (collectArgs ty)
                 newCtx <- sequence (extraPreds (map return args) (map return ctx))
                 -- _ <- fail ("args: " ++ show args ++", ty: " ++ show ty)
+#if MIN_VERSION_template_haskell(2,11,0)
+                return [InstanceD overlap newCtx ty body]
+#else
                 return [InstanceD newCtx ty body]
+#endif
          _ ->
              error $
                  "Unexpected declarations returned by deriveLargeHashable: " ++ show (ppr decs)
@@ -167,6 +193,10 @@ patternForCon con = case con of
               RecC n varTypes -> ConP n $ uniqueVarPats (length varTypes)
               InfixC _ n _ -> InfixP (VarP . mkName $ "x") n (VarP . mkName $ "y")
               ForallC _ _ c -> patternForCon c
+#if MIN_VERSION_template_haskell(2,11,0)
+              GadtC [n] types _ -> ConP n $ uniqueVarPats (length types)
+              RecGadtC [n] varTypes _ -> ConP n $ uniqueVarPats (length varTypes)
+#endif
     where uniqueVarPats n = take n . map (VarP . mkName) $ names
 
 -- | Sequences two Expressions using the '(>>)' operator.
