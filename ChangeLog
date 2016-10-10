@@ -1,0 +1,8 @@
+0.1.0.2: 2016-10-10
+        * fixed build problems because of TemplateHaskell 2.11
+
+0.1.0.1: 2016-08-10
+        * fixed build issue: added bitfn.h to cabal file
+
+0.1.0.0: 2016-08-09
+        * initial release
