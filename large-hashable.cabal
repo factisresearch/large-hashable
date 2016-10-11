@@ -1,5 +1,5 @@
 name:                large-hashable
-version:             0.1.0.2
+version:             0.1.0.3
 synopsis:            Efficiently hash (large) Haskell values
 description:         Please see README.md
 homepage:            https://github.com/factisresearch/large-hashable
@@ -13,6 +13,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
     cbits/md5.h
+    cbits/bitfn.h
     README.md
     shell.nix
     stack.yaml
