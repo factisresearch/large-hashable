@@ -162,61 +162,61 @@ updateHashWithFun f x =
        ioInLH $ f updates x
 
 instance LargeHashable Int where
-    updateHash i = updateHashWithFun hu_updateLong (fromIntegral i)
+    updateHash = updateHashWithFun hu_updateLong . fromIntegral
 
 instance LargeHashable Int8 where
-    updateHash = updateHashWithFun hu_updateChar . CChar
-
-instance LargeHashable Int16 where
-    updateHash = updateHashWithFun hu_updateShort . CShort
-
-instance LargeHashable Int32 where
-    updateHash = updateHashWithFun hu_updateInt . CInt
-
-instance LargeHashable Int64 where
-    updateHash = updateHashWithFun hu_updateLong . CLong
-
-instance LargeHashable Word where
-    updateHash i = updateHashWithFun hu_updateLong (fromIntegral i)
-
-instance LargeHashable Word8 where
-    updateHash = updateHashWithFun hu_updateUChar . CUChar
-
-instance LargeHashable Word16 where
-    updateHash = updateHashWithFun hu_updateUShort . CUShort
-
-instance LargeHashable Word32 where
-    updateHash = updateHashWithFun hu_updateUInt . CUInt
-
-instance LargeHashable Word64 where
-    updateHash = updateHashWithFun hu_updateULong . CULong
-
-instance LargeHashable CChar where
     updateHash = updateHashWithFun hu_updateChar
 
-instance LargeHashable CShort where
+instance LargeHashable Int16 where
     updateHash = updateHashWithFun hu_updateShort
 
-instance LargeHashable CInt where
+instance LargeHashable Int32 where
     updateHash = updateHashWithFun hu_updateInt
 
-instance LargeHashable CLong where
+instance LargeHashable Int64 where
     updateHash = updateHashWithFun hu_updateLong
 
-instance LargeHashable CUChar where
+instance LargeHashable Word where
+    updateHash = updateHashWithFun hu_updateLong . fromIntegral
+
+instance LargeHashable Word8 where
     updateHash = updateHashWithFun hu_updateUChar
 
-instance LargeHashable CUShort where
+instance LargeHashable Word16 where
     updateHash = updateHashWithFun hu_updateUShort
 
-instance LargeHashable CUInt where
+instance LargeHashable Word32 where
     updateHash = updateHashWithFun hu_updateUInt
 
+instance LargeHashable Word64 where
+    updateHash = updateHashWithFun hu_updateULong . fromIntegral
+
+instance LargeHashable CChar where
+    updateHash (CChar i) = updateHashWithFun hu_updateChar i
+
+instance LargeHashable CShort where
+    updateHash (CShort i) = updateHashWithFun hu_updateShort i
+
+instance LargeHashable CInt where
+    updateHash (CInt i) = updateHashWithFun hu_updateInt i
+
+instance LargeHashable CLong where
+    updateHash (CLong i) = updateHashWithFun hu_updateLong (fromIntegral i)
+
+instance LargeHashable CUChar where
+    updateHash (CUChar w) = updateHashWithFun hu_updateUChar w
+
+instance LargeHashable CUShort where
+    updateHash (CUShort w) = updateHashWithFun hu_updateUShort w
+
+instance LargeHashable CUInt where
+    updateHash (CUInt w) = updateHashWithFun hu_updateUInt w
+
 instance LargeHashable CULong where
-    updateHash = updateHashWithFun hu_updateULong
+    updateHash (CULong w) = updateHashWithFun hu_updateULong (fromIntegral w)
 
 instance LargeHashable Char where
-    updateHash = updateHashWithFun hu_updateUInt . CUInt . Utf8.c2w
+    updateHash = updateHashWithFun hu_updateUInt . Utf8.c2w
 
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()

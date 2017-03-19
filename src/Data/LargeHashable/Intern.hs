@@ -18,8 +18,8 @@ module Data.LargeHashable.Intern (
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
 import Control.Monad
+import Data.Int
 import Data.Word
-import Foreign.C.Types
 import Foreign.Ptr
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -28,14 +28,14 @@ import System.IO.Unsafe (unsafePerformIO)
 data HashUpdates
     = HashUpdates
     { hu_updatePtr :: {-# NOUNPACK #-} !(Ptr Word8 -> Int -> IO ()) -- ^ adds a byte array to the hash
-    , hu_updateChar :: {-# NOUNPACK #-} !(CChar -> IO ())      -- Int8
-    , hu_updateUChar :: {-# NOUNPACK #-} !(CUChar -> IO ())    -- Word8
-    , hu_updateShort :: {-# NOUNPACK #-} !(CShort -> IO ())    -- Int16
-    , hu_updateUShort :: {-# NOUNPACK #-} !(CUShort -> IO ())  -- Word16
-    , hu_updateInt :: {-# NOUNPACK #-} !(CInt -> IO ())        -- Int32
-    , hu_updateUInt :: {-# NOUNPACK #-} !(CUInt -> IO ())      -- Word32
-    , hu_updateLong :: {-# NOUNPACK #-} !(CLong -> IO ())      -- Int64
-    , hu_updateULong :: {-# NOUNPACK #-} !(CULong -> IO ())    -- Word64
+    , hu_updateChar :: {-# NOUNPACK #-} !(Int8 -> IO ())      -- Int8
+    , hu_updateUChar :: {-# NOUNPACK #-} !(Word8 -> IO ())    -- Word8
+    , hu_updateShort :: {-# NOUNPACK #-} !(Int16 -> IO ())    -- Int16
+    , hu_updateUShort :: {-# NOUNPACK #-} !(Word16 -> IO ())  -- Word16
+    , hu_updateInt :: {-# NOUNPACK #-} !(Int32 -> IO ())        -- Int32
+    , hu_updateUInt :: {-# NOUNPACK #-} !(Word32 -> IO ())      -- Word32
+    , hu_updateLong :: {-# NOUNPACK #-} !(Int64 -> IO ())      -- Int64
+    , hu_updateULong :: {-# NOUNPACK #-} !(Word64 -> IO ())    -- Word64
     }
 
 -- | The interface for a hashing algorithm. The interface contains a simple run
