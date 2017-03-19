@@ -8,10 +8,10 @@ module Data.LargeHashable.MD5 (
 ) where
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
+import Data.Int
 import Data.LargeHashable.Intern
 import Data.LargeHashable.LargeWord
 import Data.Word
-import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
@@ -32,28 +32,28 @@ foreign import ccall unsafe "md5.h md5_update"
     c_md5_update :: Ptr RawCtx -> Ptr Word8 -> Int -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_char"
-    c_md5_update_char :: Ptr RawCtx -> CChar -> IO ()
+    c_md5_update_char :: Ptr RawCtx -> Int8 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_uchar"
-    c_md5_update_uchar :: Ptr RawCtx -> CUChar -> IO ()
+    c_md5_update_uchar :: Ptr RawCtx -> Word8 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_short"
-    c_md5_update_short :: Ptr RawCtx -> CShort -> IO ()
+    c_md5_update_short :: Ptr RawCtx -> Int16 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_ushort"
-    c_md5_update_ushort :: Ptr RawCtx -> CUShort -> IO ()
+    c_md5_update_ushort :: Ptr RawCtx -> Word16 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_int"
-    c_md5_update_int :: Ptr RawCtx -> CInt -> IO ()
+    c_md5_update_int :: Ptr RawCtx -> Int32 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_uint"
-    c_md5_update_uint :: Ptr RawCtx -> CUInt -> IO ()
+    c_md5_update_uint :: Ptr RawCtx -> Word32 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_long"
-    c_md5_update_long :: Ptr RawCtx -> CLong -> IO ()
+    c_md5_update_long :: Ptr RawCtx -> Int64 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_ulong"
-    c_md5_update_ulong :: Ptr RawCtx -> CULong -> IO ()
+    c_md5_update_ulong :: Ptr RawCtx -> Word64 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_finalize"
     c_md5_finalize :: Ptr RawCtx -> Ptr Word8 -> IO ()
@@ -93,7 +93,7 @@ md5HashAlgorithm =
     where
       xorMD5 (MD5Hash h1) (MD5Hash h2) = MD5Hash (h1 `xorW128` h2)
       updateHash updates (MD5Hash h) =
-          let f = hu_updateULong updates . CULong
+          let f = hu_updateULong updates
           in do f (w128_first h)
                 f (w128_second h)
       run f =
