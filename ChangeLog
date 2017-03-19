@@ -1,3 +1,6 @@
+0.1.0.3: 2017-03-19
+        * fixed build on `i686` related to non-fixed size integers
+
 0.1.0.2: 2016-10-10
         * fixed build problems because of TemplateHaskell 2.11
 
