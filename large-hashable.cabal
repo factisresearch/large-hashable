@@ -15,7 +15,8 @@ extra-source-files:
     cbits/md5.h
     cbits/bitfn.h
     README.md
-    shell.nix
+    ChangeLog
+    default.nix
     stack.yaml
 
 library
