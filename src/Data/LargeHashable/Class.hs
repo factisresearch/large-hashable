@@ -1,11 +1,17 @@
 -- | This module defines the central type class `LargeHashable` of this package.
-{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE TypeOperators     #-}
-{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.LargeHashable.Class (
 
-    LargeHashable(..), largeHash, LargeHashable'(..)
+    LargeHashable(..), largeHash, LargeHashable'(..), genericUpdateHash
 
 ) where
 
@@ -15,6 +21,7 @@ import Data.Fixed
 import Data.Foldable
 import Data.Int
 import Data.LargeHashable.Intern
+import Data.Proxy
 import Data.Ratio
 import Data.Time
 import Data.Time.Clock.TAI
@@ -23,6 +30,7 @@ import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import GHC.Generics
+import GHC.TypeLits
 import qualified Codec.Binary.UTF8.Light as Utf8
 import qualified Data.Aeson as J
 import qualified Data.ByteString as B
@@ -84,7 +92,7 @@ import qualified Data.Vector as V
 class LargeHashable a where
     updateHash :: a -> LH ()
     default updateHash :: (GenericLargeHashable (Rep a), Generic a) => a -> LH ()
-    updateHash = updateHashGeneric . from
+    updateHash = genericUpdateHash
 
 class LargeHashable' t where
     updateHash' :: LargeHashable a => t a -> LH ()
@@ -474,6 +482,9 @@ instance LargeHashable Void where
 instance LargeHashable a => LargeHashable (Seq.Seq a) where
     updateHash = updateHash . F.toList
 
+genericUpdateHash :: (Generic a, GenericLargeHashable (Rep a)) => a -> LH ()
+genericUpdateHash = updateHashGeneric . from
+
 -- | Support for generically deriving 'LargeHashable' instances.
 -- Any instance of the type class 'GHC.Generics.Generic' can be made
 -- an instance of 'LargeHashable' by an empty instance declaration.
@@ -481,25 +492,45 @@ class GenericLargeHashable f where
     updateHashGeneric :: f p -> LH ()
 
 instance GenericLargeHashable V1 where
+    {-# INLINE updateHashGeneric #-}
     updateHashGeneric = undefined
 
 instance GenericLargeHashable U1 where
+    {-# INLINE updateHashGeneric #-}
     updateHashGeneric _ = updateHash ()
 
-instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :+: g) where
-    updateHashGeneric (L1 x) = do
-        updateHash (0 :: CULong) -- is left
-        updateHashGeneric x
-    updateHashGeneric (R1 x) = do
-        updateHash (1 :: CULong) -- is right
-        updateHashGeneric x
-
 instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :*: g) where
+    {-# INLINE updateHashGeneric #-}
     updateHashGeneric (x :*: y) = updateHashGeneric x >> updateHashGeneric y
 
+instance GenericLargeHashableSum (f :+: g) 0 => GenericLargeHashable (f :+: g) where
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric x = updateHashGenericSum x (Proxy :: Proxy 0)
+
 instance LargeHashable c => GenericLargeHashable (K1 i c) where
-    updateHashGeneric (K1 x) = updateHash x
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric x = updateHash (unK1 x)
 
 -- ignore meta-info (for now)
 instance (GenericLargeHashable f) => GenericLargeHashable (M1 i t f) where
-      updateHashGeneric (M1 x) = updateHashGeneric x
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric x = updateHashGeneric (unM1 x)
+
+class GenericLargeHashableSum (f :: * -> *) (n :: Nat) where
+    updateHashGenericSum :: f p -> Proxy n -> LH ()
+
+
+instance (KnownNat n, GenericLargeHashable f, GenericLargeHashableSum g (n+1))
+    => GenericLargeHashableSum (f :+: g) n where
+    {-# INLINE updateHashGenericSum #-}
+    updateHashGenericSum (L1 x) p = do
+        updateHash (fromInteger (natVal p) :: CULong)
+        updateHashGeneric x
+    updateHashGenericSum (R1 x) _ = updateHashGenericSum x (Proxy :: Proxy (n+1))
+
+instance (KnownNat n, GenericLargeHashable f)
+    => GenericLargeHashableSum (M1 i t f) n where
+    {-# INLINE updateHashGenericSum #-}
+    updateHashGenericSum x p = do
+        updateHash (fromInteger (natVal p) :: CULong)
+        updateHashGeneric (unM1 x)
