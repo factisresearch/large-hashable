@@ -52,3 +52,32 @@ test_genericSumOfProductsGetsOptimized =
     case $(inspectTest (hasNoGenerics 'genericUpdateHashSop)) of
       Success _ -> return ()
       Failure e -> assertFailure e
+
+data UnitTest = UnitTest deriving (Generic)
+
+genericUpdateHashUnitType :: UnitTest -> LH ()
+genericUpdateHashUnitType = genericUpdateHash
+
+unitTypeReturn :: UnitTest -> LH ()
+unitTypeReturn UnitTest = return ()
+
+test_genericUnitHashIsNoop :: IO ()
+test_genericUnitHashIsNoop =
+    case $(inspectTest ('genericUpdateHashUnitType === 'unitTypeReturn)) of
+      Success _ -> return ()
+      Failure e -> assertFailure e
+
+updateHashHaskellUnit :: () -> LH ()
+updateHashHaskellUnit () =
+    -- I have to do this twice for inlining to work
+    do updateHash ()
+       updateHash ()
+
+haskellUnitReturn :: () -> LH ()
+haskellUnitReturn () = return ()
+
+test_haskellUnitHashIsNoop :: IO ()
+test_haskellUnitHashIsNoop =
+    case $(inspectTest ('updateHashHaskellUnit === 'haskellUnitReturn)) of
+      Success _ -> return ()
+      Failure e -> assertFailure e

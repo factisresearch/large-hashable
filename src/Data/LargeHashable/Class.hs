@@ -396,7 +396,7 @@ instance (LargeHashable a, LargeHashable b) => LargeHashable (Either a b) where
     updateHash (Right !r) = updateHash (1 :: CULong) >> updateHash r
 
 instance LargeHashable () where
-    updateHash () = updateHash (0 :: CULong)
+    updateHash () = return ()
 
 instance LargeHashable Ordering where
     updateHash EQ = updateHash (0  :: CULong)
@@ -497,7 +497,7 @@ instance GenericLargeHashable V1 where
 
 instance GenericLargeHashable U1 where
     {-# INLINE updateHashGeneric #-}
-    updateHashGeneric _ = updateHash ()
+    updateHashGeneric U1 = updateHash ()
 
 instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :*: g) where
     {-# INLINE updateHashGeneric #-}
