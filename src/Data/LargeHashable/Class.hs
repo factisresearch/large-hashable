@@ -21,7 +21,6 @@ import Data.Fixed
 import Data.Foldable
 import Data.Int
 import Data.LargeHashable.Intern
-import Data.Proxy
 import Data.Ratio
 import Data.Time
 import Data.Time.Clock.TAI
@@ -30,7 +29,6 @@ import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import GHC.Generics
-import GHC.TypeLits
 import qualified Codec.Binary.UTF8.Light as Utf8
 import qualified Data.Aeson as J
 import qualified Data.ByteString as B
@@ -503,9 +501,9 @@ instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashabl
     {-# INLINE updateHashGeneric #-}
     updateHashGeneric (x :*: y) = updateHashGeneric x >> updateHashGeneric y
 
-instance GenericLargeHashableSum (f :+: g) 0 => GenericLargeHashable (f :+: g) where
+instance GenericLargeHashableSum (f :+: g) => GenericLargeHashable (f :+: g) where
     {-# INLINE updateHashGeneric #-}
-    updateHashGeneric x = updateHashGenericSum x (Proxy :: Proxy 0)
+    updateHashGeneric x = updateHashGenericSum x 0
 
 instance LargeHashable c => GenericLargeHashable (K1 i c) where
     {-# INLINE updateHashGeneric #-}
@@ -516,21 +514,20 @@ instance (GenericLargeHashable f) => GenericLargeHashable (M1 i t f) where
     {-# INLINE updateHashGeneric #-}
     updateHashGeneric x = updateHashGeneric (unM1 x)
 
-class GenericLargeHashableSum (f :: * -> *) (n :: Nat) where
-    updateHashGenericSum :: f p -> Proxy n -> LH ()
+class GenericLargeHashableSum (f :: * -> *) where
+    updateHashGenericSum :: f p -> Word64 -> LH ()
 
 
-instance (KnownNat n, GenericLargeHashable f, GenericLargeHashableSum g (n+1))
-    => GenericLargeHashableSum (f :+: g) n where
+instance (GenericLargeHashable f, GenericLargeHashableSum g)
+    => GenericLargeHashableSum (f :+: g) where
     {-# INLINE updateHashGenericSum #-}
-    updateHashGenericSum (L1 x) p = do
-        updateHash (fromInteger (natVal p) :: CULong)
+    updateHashGenericSum (L1 x) !p = do
+        updateHash p
         updateHashGeneric x
-    updateHashGenericSum (R1 x) _ = updateHashGenericSum x (Proxy :: Proxy (n+1))
+    updateHashGenericSum (R1 x) !p = updateHashGenericSum x (p+1)
 
-instance (KnownNat n, GenericLargeHashable f)
-    => GenericLargeHashableSum (M1 i t f) n where
+instance (GenericLargeHashable f) => GenericLargeHashableSum (M1 i t f) where
     {-# INLINE updateHashGenericSum #-}
-    updateHashGenericSum x p = do
-        updateHash (fromInteger (natVal p) :: CULong)
+    updateHashGenericSum x !p = do
+        updateHash p
         updateHashGeneric (unM1 x)
