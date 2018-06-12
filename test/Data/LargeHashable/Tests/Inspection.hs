@@ -55,8 +55,13 @@ test_genericSumOfProductsGetsOptimized =
 
 data UnitTest = UnitTest deriving (Generic)
 
+$(deriveLargeHashable ''UnitTest)
+
 genericUpdateHashUnitType :: UnitTest -> LH ()
 genericUpdateHashUnitType = genericUpdateHash
+
+thUpdateHashUnitType :: UnitTest -> LH ()
+thUpdateHashUnitType = updateHash
 
 unitTypeReturn :: UnitTest -> LH ()
 unitTypeReturn UnitTest = return ()
@@ -64,6 +69,12 @@ unitTypeReturn UnitTest = return ()
 test_genericUnitHashIsNoop :: IO ()
 test_genericUnitHashIsNoop =
     case $(inspectTest ('genericUpdateHashUnitType === 'unitTypeReturn)) of
+      Success _ -> return ()
+      Failure e -> assertFailure e
+
+test_thUnitHashIsNoop :: IO ()
+test_thUnitHashIsNoop =
+    case $(inspectTest ('thUpdateHashUnitType === 'unitTypeReturn)) of
       Success _ -> return ()
       Failure e -> assertFailure e
 

@@ -8,10 +8,11 @@ module Data.LargeHashable.TH (
 
 ) where
 
-import Data.LargeHashable.Class
-import Language.Haskell.TH
-import Foreign.C.Types (CULong (..))
+import Control.Arrow (first)
 import Control.Monad (forM)
+import Data.LargeHashable.Class
+import Data.Word
+import Language.Haskell.TH
 
 -- | Template Haskell function to automatically derive
 --   instances of 'LargeHashable'. The derived instances first
@@ -162,21 +163,25 @@ buildInstance basicType context vars cons =
 --   selected IDs and calling 'updateHashClause' for everyone of them to generate
 --   the corresponding clause.
 updateHashDeclaration :: [(Integer, Con)] -> Q Dec
-updateHashDeclaration consWIds = funD 'updateHash (map (uncurry updateHashClause) consWIds)
+updateHashDeclaration [(_, con)] = funD 'updateHash [updateHashClause Nothing con]
+updateHashDeclaration consWIds = funD 'updateHash (map (uncurry updateHashClause . first Just) consWIds)
 
 -- | 'updateHashClause' generates a clause of the 'updateHash' function.
 --   It makes sure all the fields are matched correctly and updates the hash
 --   with the neccessary information about the constructor (its ID) and all
 --   of its fields.
-updateHashClause :: Integer -> Con -> Q Clause
-updateHashClause i con =
+updateHashClause :: Maybe Integer -> Con -> Q Clause
+updateHashClause mI con =
         clause [return patOfClause]
             (normalB $
                 foldl sequenceExps
-                    [| updateHash ($(litE . IntegerL $ i) :: CULong) |]
+                    conMarker
                     hashUpdatesOfConFields)
             []
-    where hashUpdatesOfConFields = map (\name -> [| updateHash $(varE name) |]) patVarNames
+    where conMarker = case mI of
+                        Just i -> [| updateHash ($(litE . IntegerL $ i) :: Word64) |]
+                        Nothing -> [| return () |]
+          hashUpdatesOfConFields = map (\name -> [| updateHash $(varE name) |]) patVarNames
           -- Extract the names of all the
           -- pattern variables from usedPat.
           patVarNames = case patOfClause of
