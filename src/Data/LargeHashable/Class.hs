@@ -515,7 +515,7 @@ instance (GenericLargeHashable f) => GenericLargeHashable (M1 i t f) where
     updateHashGeneric x = updateHashGeneric (unM1 x)
 
 class GenericLargeHashableSum (f :: * -> *) where
-    updateHashGenericSum :: f p -> Word64 -> LH ()
+    updateHashGenericSum :: f p -> Int -> LH ()
 
 
 instance (GenericLargeHashable f, GenericLargeHashableSum g)
