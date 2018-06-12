@@ -8,7 +8,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE UndecidableInstances #-}
 module Data.LargeHashable.Class (
 
     LargeHashable(..), largeHash, LargeHashable'(..), genericUpdateHash,
@@ -482,6 +481,7 @@ instance LargeHashable a => LargeHashable (Seq.Seq a) where
 
 genericUpdateHash :: (Generic a, GenericLargeHashable (Rep a)) => a -> LH ()
 genericUpdateHash = updateHashGeneric . from
+{-# INLINE genericUpdateHash #-}
 
 -- | Support for generically deriving 'LargeHashable' instances.
 -- Any instance of the type class 'GHC.Generics.Generic' can be made
@@ -501,7 +501,7 @@ instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashabl
     {-# INLINE updateHashGeneric #-}
     updateHashGeneric (x :*: y) = updateHashGeneric x >> updateHashGeneric y
 
-instance GenericLargeHashableSum (f :+: g) => GenericLargeHashable (f :+: g) where
+instance (GenericLargeHashable f, GenericLargeHashableSum g) => GenericLargeHashable (f :+: g) where
     {-# INLINE updateHashGeneric #-}
     updateHashGeneric x = updateHashGenericSum x 0
 

@@ -28,8 +28,13 @@ data SumTest
     | D (Either Int Char)
     deriving (Generic)
 
+$(deriveLargeHashable ''SumTest)
+
 genericUpdateHashSum :: SumTest -> LH ()
 genericUpdateHashSum = genericUpdateHash
+
+thUpdateHashSum :: SumTest -> LH ()
+thUpdateHashSum = updateHash
 
 test_genericSumGetsOptimized :: IO ()
 test_genericSumGetsOptimized =
@@ -37,19 +42,39 @@ test_genericSumGetsOptimized =
       Success _ -> return ()
       Failure e -> assertFailure e
 
+test_genericSumEqTH :: IO ()
+test_genericSumEqTH =
+    unitTestPending' "This currently doesn't hold" $
+    case $(inspectTest ('genericUpdateHashSum === 'thUpdateHashSum)) of
+      Success _ -> return ()
+      Failure e -> assertFailure e
+
 data SopTest
     = A2 Char Int Bool
-    | B2 SopTest Int Bool SopTest
-    | C2 SopTest SopTest
-    | D2 (Either Int Char) SopTest
+    | B2 Int Bool
+    | C2 (Char, Int) (Maybe Char)
+    | D2 (Either Int Char) (Char, Int, Integer)
     deriving (Generic)
 
-genericUpdateHashSop :: SumTest -> LH ()
+$(deriveLargeHashable ''SopTest)
+
+genericUpdateHashSop :: SopTest -> LH ()
 genericUpdateHashSop = genericUpdateHash
+
+thUpdateHashSop :: SopTest -> LH ()
+thUpdateHashSop = updateHash
 
 test_genericSumOfProductsGetsOptimized :: IO ()
 test_genericSumOfProductsGetsOptimized =
+    unitTestPending' "This currently doesn't hold" $
     case $(inspectTest (hasNoGenerics 'genericUpdateHashSop)) of
+      Success _ -> return ()
+      Failure e -> assertFailure e
+
+test_genericSopEqTH :: IO ()
+test_genericSopEqTH =
+    unitTestPending' "This currently doesn't hold" $
+    case $(inspectTest ('genericUpdateHashSop === 'thUpdateHashSop)) of
       Success _ -> return ()
       Failure e -> assertFailure e
 
