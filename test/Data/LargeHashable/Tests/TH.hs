@@ -79,7 +79,7 @@ test_gadtOneArg =
 
 
 data GadtMultipleArgs a b c where
-    GadtMultipleArgsA :: a -> b -> GadtMultipleArgs a b Int
+    GadtMultipleArgsA :: Int -> Char -> GadtMultipleArgs String Integer Int
     GadtMultipleArgsB :: Int -> GadtMultipleArgs Char String Integer
 
 $(deriveLargeHashable ''GadtMultipleArgs)

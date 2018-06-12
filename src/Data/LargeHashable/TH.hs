@@ -197,7 +197,7 @@ patternForCon con = case con of
               NormalC n types -> ConP n $ uniqueVarPats (length types)
               RecC n varTypes -> ConP n $ uniqueVarPats (length varTypes)
               InfixC _ n _ -> InfixP (VarP . mkName $ "x") n (VarP . mkName $ "y")
-              ForallC _ _ c -> patternForCon c
+              c@(ForallC{}) -> error $ "Cannot derive quantified type as it would potentially violate uniqueness: "++ show c
 #if MIN_VERSION_template_haskell(2,11,0)
               GadtC [n] types _ -> ConP n $ uniqueVarPats (length types)
               RecGadtC [n] varTypes _ -> ConP n $ uniqueVarPats (length varTypes)
