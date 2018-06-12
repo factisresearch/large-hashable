@@ -1,10 +1,1 @@
-resolver: nightly-2018-06-11
-require-stack-version: ">= 1.0.0"
-
-packages:
-- '.'
-extra-deps:
-- git: https://github.com/nomeata/inspection-testing.git
-  commit: 0961c2620728fae6105a8d0c14c40a8e7729a3e8
-
-flags: {}
+stack-ghc84.yaml
