@@ -196,6 +196,7 @@ patternForCon con = case con of
 #if MIN_VERSION_template_haskell(2,11,0)
               GadtC [n] types _ -> ConP n $ uniqueVarPats (length types)
               RecGadtC [n] varTypes _ -> ConP n $ uniqueVarPats (length varTypes)
+              _ -> error $ "Constructor not supported: "++show con
 #endif
     where uniqueVarPats n = take n . map (VarP . mkName) $ names
 

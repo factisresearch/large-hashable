@@ -13,9 +13,9 @@ addons:
 # The different configurations we want to test. You could also do things like
 # change flags or use --stack-yaml to point to a different file.
 env:
-- LH_TRAVIS_STACK_ARGS=""
-- LH_TRAVIS_STACK_ARGS="--resolver lts"
-- LH_TRAVIS_STACK_ARGS="--resolver nightly"
+- LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc80.yaml"
+- LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc82.yaml"
+- LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc84.yaml"
 
 before_install:
 - mkdir -p ~/.local/bin
@@ -23,8 +23,8 @@ before_install:
 - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
 install:
-    - stack setup --no-terminal
-    - stack build --only-snapshot --no-terminal
+    - stack $LH_TRAVIS_STACK_ARGS setup --no-terminal
+    - stack $LH_TRAVIS_STACK_ARGS build --only-snapshot --no-terminal
 
 script:
     - stack $LH_TRAVIS_STACK_ARGS --no-terminal --install-ghc test --haddock --pedantic

@@ -1,11 +1,17 @@
 -- | This module defines the central type class `LargeHashable` of this package.
-{-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE TypeOperators     #-}
-{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.LargeHashable.Class (
 
-    LargeHashable(..), largeHash, LargeHashable'(..)
+    LargeHashable(..), largeHash, LargeHashable'(..), genericUpdateHash
 
 ) where
 
@@ -84,7 +90,7 @@ import qualified Data.Vector as V
 class LargeHashable a where
     updateHash :: a -> LH ()
     default updateHash :: (GenericLargeHashable (Rep a), Generic a) => a -> LH ()
-    updateHash = updateHashGeneric . from
+    updateHash = genericUpdateHash
 
 class LargeHashable' t where
     updateHash' :: LargeHashable a => t a -> LH ()
@@ -388,7 +394,7 @@ instance (LargeHashable a, LargeHashable b) => LargeHashable (Either a b) where
     updateHash (Right !r) = updateHash (1 :: CULong) >> updateHash r
 
 instance LargeHashable () where
-    updateHash () = updateHash (0 :: CULong)
+    updateHash () = return ()
 
 instance LargeHashable Ordering where
     updateHash EQ = updateHash (0  :: CULong)
@@ -474,6 +480,9 @@ instance LargeHashable Void where
 instance LargeHashable a => LargeHashable (Seq.Seq a) where
     updateHash = updateHash . F.toList
 
+genericUpdateHash :: (Generic a, GenericLargeHashable (Rep a)) => a -> LH ()
+genericUpdateHash = updateHashGeneric . from
+
 -- | Support for generically deriving 'LargeHashable' instances.
 -- Any instance of the type class 'GHC.Generics.Generic' can be made
 -- an instance of 'LargeHashable' by an empty instance declaration.
@@ -481,25 +490,44 @@ class GenericLargeHashable f where
     updateHashGeneric :: f p -> LH ()
 
 instance GenericLargeHashable V1 where
+    {-# INLINE updateHashGeneric #-}
     updateHashGeneric = undefined
 
 instance GenericLargeHashable U1 where
-    updateHashGeneric _ = updateHash ()
-
-instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :+: g) where
-    updateHashGeneric (L1 x) = do
-        updateHash (0 :: CULong) -- is left
-        updateHashGeneric x
-    updateHashGeneric (R1 x) = do
-        updateHash (1 :: CULong) -- is right
-        updateHashGeneric x
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric U1 = updateHash ()
 
 instance (GenericLargeHashable f, GenericLargeHashable g) => GenericLargeHashable (f :*: g) where
+    {-# INLINE updateHashGeneric #-}
     updateHashGeneric (x :*: y) = updateHashGeneric x >> updateHashGeneric y
 
+instance GenericLargeHashableSum (f :+: g) => GenericLargeHashable (f :+: g) where
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric x = updateHashGenericSum x 0
+
 instance LargeHashable c => GenericLargeHashable (K1 i c) where
-    updateHashGeneric (K1 x) = updateHash x
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric x = updateHash (unK1 x)
 
 -- ignore meta-info (for now)
 instance (GenericLargeHashable f) => GenericLargeHashable (M1 i t f) where
-      updateHashGeneric (M1 x) = updateHashGeneric x
+    {-# INLINE updateHashGeneric #-}
+    updateHashGeneric x = updateHashGeneric (unM1 x)
+
+class GenericLargeHashableSum (f :: * -> *) where
+    updateHashGenericSum :: f p -> Int -> LH ()
+
+
+instance (GenericLargeHashable f, GenericLargeHashableSum g)
+    => GenericLargeHashableSum (f :+: g) where
+    {-# INLINE updateHashGenericSum #-}
+    updateHashGenericSum (L1 x) !p = do
+        updateHash p
+        updateHashGeneric x
+    updateHashGenericSum (R1 x) !p = updateHashGenericSum x (p+1)
+
+instance (GenericLargeHashable f) => GenericLargeHashableSum (M1 i t f) where
+    {-# INLINE updateHashGenericSum #-}
+    updateHashGenericSum x !p = do
+        updateHash p
+        updateHashGeneric (unM1 x)
