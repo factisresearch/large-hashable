@@ -5,16 +5,19 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Data.LargeHashable.Benchmarks.Main (main) where
 
-import qualified Data.Text as T
-import Data.SafeCopy
 import Control.DeepSeq
-import GHC.Generics
+import Criterion
+import Criterion.Main
+import Data.SafeCopy
 import Data.Serialize.Put
-import System.Environment
+import GHC.Generics
+import qualified Data.Bytes.Serial as S
+import qualified Data.LargeHashable as LH
+import qualified Data.LargeHashable.Class as LH
+import qualified Data.LargeHashable.Intern as LH
 import qualified Data.LargeHashable.Benchmarks.CryptoHash as CH
 import qualified Data.LargeHashable.Benchmarks.Serial as Serial
-import qualified Data.LargeHashable as LH
-import qualified Data.Bytes.Serial as S
+import qualified Data.Text as T
 
 data Patient
     = Patient
@@ -26,6 +29,7 @@ data Patient
     deriving (Eq, Show, NFData, Generic)
 
 $(deriveSafeCopy 0 'base ''Patient)
+$(LH.deriveLargeHashable ''Patient)
 
 instance S.Serial Patient
 
@@ -37,13 +41,13 @@ instance CH.LargeHashable Patient where
             !ctx4 = CH.hashUpdate ctx3 (p_age p)
         in ctx4
 
-instance LH.LargeHashable Patient where
-    updateHash p =
-        {-# SCC "updateHash/LargHashable" #-}
-        do {-# SCC "updateHash/firstName" #-} LH.updateHash (p_firstName p)
-           {-# SCC "updateHash/lastName" #-} LH.updateHash (p_lastName p)
-           {-# SCC "updateHash/note" #-} LH.updateHash (p_note p)
-           {-# SCC "updateHash/age" #-} LH.updateHash (p_age p)
+updateHashPatient :: Patient -> LH.LH ()
+updateHashPatient p =
+    {-# SCC "updateHash/LargHashable" #-}
+    do {-# SCC "updateHash/firstName" #-} LH.updateHash (p_firstName p)
+       {-# SCC "updateHash/lastName" #-} LH.updateHash (p_lastName p)
+       {-# SCC "updateHash/note" #-} LH.updateHash (p_note p)
+       {-# SCC "updateHash/age" #-} LH.updateHash (p_age p)
 
 mkPatList :: Int -> [Patient]
 mkPatList n =
@@ -59,52 +63,21 @@ mkPatList n =
           }
 
 _NUM_ :: Int
-_NUM_ = 1000000
+_NUM_ = 100000
 
 patList :: [Patient]
 patList = mkPatList _NUM_
 
-genOnly :: IO ()
-genOnly =
-    do let !l = patList
-       putStrLn ("Generated " ++ show (length l) ++ " patients")
-
-hashSafeCopy :: IO ()
-hashSafeCopy =
-    do let !l = patList
-       putStrLn ("Generated " ++ show (length l) ++ " patients")
-       let !bs = runPut (safePut l)
-           !hash = CH.hashMd5 bs
-       putStrLn ("Hash: " ++ show hash)
-
-hashCryptoHash :: IO ()
-hashCryptoHash =
-    do let !l = patList
-       putStrLn ("Generated " ++ show (length l) ++ " patients")
-       let !hash = CH.hashMd5 l
-       putStrLn ("Hash: " ++ show hash)
-
-hashLargeHashable :: IO ()
-hashLargeHashable =
-    do let !l = patList
-       putStrLn ("Generated " ++ show (length l) ++ " patients")
-       let !hash = LH.largeHash LH.md5HashAlgorithm l
-       putStrLn ("Hash: " ++ show hash)
-
-hashSerial :: IO ()
-hashSerial =
-    do let !l = patList
-       putStrLn ("Generated " ++ show (length l) ++ " patients")
-       let !hash = Serial.serialLargeHash LH.md5HashAlgorithm l
-       putStrLn ("Hash: " ++ show hash)
-
 main :: IO ()
 main =
-    do args <- getArgs
-       case args of
-         ["dry"] -> genOnly
-         ["safecopy"] -> hashSafeCopy
-         ["cryptohash"] ->  hashCryptoHash
-         ["large-hashable"] -> hashLargeHashable
-         ["large-hashable-serial"] -> hashSerial
-         _ -> hashLargeHashable
+    defaultMain
+    [ env (return patList) $ \l ->
+        bgroup "patList" $
+        [ bench "safecopy" $ whnf (CH.hashMd5 . runPut . safePut) l
+        , bench "cryptohash" $ whnf CH.hashMd5 l
+        , bench "large-hashable (Manual)" $ whnf (LH.runLH LH.md5HashAlgorithm . LH.updateHashList updateHashPatient) l
+        , bench "large-hashable (TH)" $ whnf (LH.largeHash LH.md5HashAlgorithm) l
+        , bench "large-hashable (Generic)" $ whnf (LH.runLH LH.md5HashAlgorithm . LH.genericUpdateHash) l
+        , bench "large-hashable-serial (TH)" $ whnf (Serial.serialLargeHash LH.md5HashAlgorithm) l
+        ]
+    ]

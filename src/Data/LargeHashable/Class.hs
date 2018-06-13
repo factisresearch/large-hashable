@@ -11,8 +11,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Data.LargeHashable.Class (
 
-    LargeHashable(..), largeHash, LargeHashable'(..), genericUpdateHash
-
+    LargeHashable(..), largeHash, LargeHashable'(..), genericUpdateHash,
+    updateHashList
 ) where
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
@@ -264,18 +264,18 @@ instance LargeHashable Bool where
     updateHash = updateHashBool
 
 {-# INLINE updateHashList #-}
-updateHashList :: LargeHashable a => [a] -> LH ()
-updateHashList = loop 0
+updateHashList :: forall a. (a -> LH ()) -> [a] -> LH ()
+updateHashList f = loop 0
     where
-      loop :: LargeHashable a => Int -> [a] -> LH ()
+      loop :: Int -> [a] -> LH ()
       loop !i [] =
           updateHash i
       loop !i (x:xs) = do
-          updateHash x
+          f x
           loop (i + 1) xs
 
 instance LargeHashable a => LargeHashable [a] where
-    updateHash = updateHashList
+    updateHash = updateHashList updateHash
 
 {-# INLINE setFoldFun #-}
 setFoldFun :: LargeHashable a => LH () -> a -> LH ()

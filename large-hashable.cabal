@@ -64,6 +64,7 @@ benchmark large-hashable-benchmark
                        -fwarn-missing-signatures -fno-warn-name-shadowing -O2
   build-depends:       base >= 4.8 && < 5
                      , base16-bytestring
+                     , criterion
                      , large-hashable
                      , safecopy
                      , text
