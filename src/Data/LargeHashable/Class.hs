@@ -167,22 +167,22 @@ updateHashWithFun f x =
        ioInLH $ f updates x
 
 instance LargeHashable Int where
-    updateHash = updateHashWithFun hu_updateLong . fromIntegral
+    updateHash = updateHashWithFun hu_updateULong . fromIntegral
 
 instance LargeHashable Int8 where
-    updateHash = updateHashWithFun hu_updateChar
+    updateHash = updateHashWithFun hu_updateUChar . fromIntegral
 
 instance LargeHashable Int16 where
-    updateHash = updateHashWithFun hu_updateShort
+    updateHash = updateHashWithFun hu_updateUShort . fromIntegral
 
 instance LargeHashable Int32 where
-    updateHash = updateHashWithFun hu_updateInt
+    updateHash = updateHashWithFun hu_updateUInt . fromIntegral
 
 instance LargeHashable Int64 where
-    updateHash = updateHashWithFun hu_updateLong
+    updateHash = updateHashWithFun hu_updateULong . fromIntegral
 
 instance LargeHashable Word where
-    updateHash = updateHashWithFun hu_updateLong . fromIntegral
+    updateHash = updateHashWithFun hu_updateULong . fromIntegral
 
 instance LargeHashable Word8 where
     updateHash = updateHashWithFun hu_updateUChar
@@ -197,16 +197,16 @@ instance LargeHashable Word64 where
     updateHash = updateHashWithFun hu_updateULong . fromIntegral
 
 instance LargeHashable CChar where
-    updateHash (CChar i) = updateHashWithFun hu_updateChar i
+    updateHash (CChar i) = updateHashWithFun hu_updateUChar (fromIntegral i)
 
 instance LargeHashable CShort where
-    updateHash (CShort i) = updateHashWithFun hu_updateShort i
+    updateHash (CShort i) = updateHashWithFun hu_updateUShort (fromIntegral i)
 
 instance LargeHashable CInt where
-    updateHash (CInt i) = updateHashWithFun hu_updateInt i
+    updateHash (CInt i) = updateHashWithFun hu_updateUInt (fromIntegral i)
 
 instance LargeHashable CLong where
-    updateHash (CLong i) = updateHashWithFun hu_updateLong (fromIntegral i)
+    updateHash (CLong i) = updateHashWithFun hu_updateULong (fromIntegral i)
 
 instance LargeHashable CUChar where
     updateHash (CUChar w) = updateHashWithFun hu_updateUChar w

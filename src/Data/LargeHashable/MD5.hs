@@ -8,7 +8,6 @@ module Data.LargeHashable.MD5 (
 ) where
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
-import Data.Int
 import Data.LargeHashable.Intern
 import Data.LargeHashable.LargeWord
 import Data.Word
@@ -31,26 +30,14 @@ foreign import ccall unsafe "md5.h md5_init"
 foreign import ccall unsafe "md5.h md5_update"
     c_md5_update :: Ptr RawCtx -> Ptr Word8 -> Int -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update_char"
-    c_md5_update_char :: Ptr RawCtx -> Int8 -> IO ()
-
 foreign import ccall unsafe "md5.h md5_update_uchar"
     c_md5_update_uchar :: Ptr RawCtx -> Word8 -> IO ()
-
-foreign import ccall unsafe "md5.h md5_update_short"
-    c_md5_update_short :: Ptr RawCtx -> Int16 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_ushort"
     c_md5_update_ushort :: Ptr RawCtx -> Word16 -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update_int"
-    c_md5_update_int :: Ptr RawCtx -> Int32 -> IO ()
-
 foreign import ccall unsafe "md5.h md5_update_uint"
     c_md5_update_uint :: Ptr RawCtx -> Word32 -> IO ()
-
-foreign import ccall unsafe "md5.h md5_update_long"
-    c_md5_update_long :: Ptr RawCtx -> Int64 -> IO ()
 
 foreign import ccall unsafe "md5.h md5_update_ulong"
     c_md5_update_ulong :: Ptr RawCtx -> Word64 -> IO ()
@@ -101,13 +88,9 @@ md5HashAlgorithm =
               let !updates =
                       HashUpdates
                       { hu_updatePtr = c_md5_update ctxPtr
-                      , hu_updateChar = c_md5_update_char ctxPtr
                       , hu_updateUChar = c_md5_update_uchar ctxPtr
-                      , hu_updateShort = c_md5_update_short ctxPtr
                       , hu_updateUShort = c_md5_update_ushort ctxPtr
-                      , hu_updateInt = c_md5_update_int ctxPtr
                       , hu_updateUInt = c_md5_update_uint ctxPtr
-                      , hu_updateLong = c_md5_update_long ctxPtr
                       , hu_updateULong = c_md5_update_ulong ctxPtr
                       }
               in f updates
