@@ -1,0 +1,7 @@
+resolver: lts-15.2
+require-stack-version: ">= 1.0.0"
+
+packages:
+- '.'
+
+flags: {}

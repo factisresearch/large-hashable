@@ -65,18 +65,22 @@ deriveLargeHashable n = reify n >>= \info ->
                 _ -> fail $ notDeriveAbleErrorMsg n info
         FamilyI _ instDecs -> fmap concat $ forM instDecs $ \instDec ->
             case instDec of
-#if MIN_VERSION_template_haskell(2,11,0)
-                DataInstD context name types _ cons _ ->
+#if MIN_VERSION_template_haskell(2,15,0)
+                DataInstD context _ ty _ cons _ ->
+#elif MIN_VERSION_template_haskell(2,11,0)
+                DataInstD context name types _ cons _ -> let ty = foldl AppT (ConT name) types in
 #else
-                DataInstD context name types cons _ ->
+                DataInstD context name types cons _ -> let ty = foldl AppT (ConT name) types in
 #endif
-                    buildInstance (foldl AppT (ConT name) types) context [] cons
-#if MIN_VERSION_template_haskell(2,11,0)
-                NewtypeInstD context name types _ con _ ->
+                    buildInstance ty context [] cons
+#if MIN_VERSION_template_haskell(2,15,0)
+                NewtypeInstD context _ ty _ con _ ->
+#elif MIN_VERSION_template_haskell(2,11,0)
+                NewtypeInstD context name types _ con _ -> let ty = foldl AppT (ConT name) types in
 #else
-                NewtypeInstD context name types con _ ->
+                NewtypeInstD context name types con _ -> let ty = foldl AppT (ConT name) types in
 #endif
-                    buildInstance (foldl AppT (ConT name) types) context [] [con]
+                    buildInstance ty context [] [con]
                 _ -> fail $ notDeriveAbleErrorMsg n info
         _ -> fail $ notDeriveAbleErrorMsg n info
 
