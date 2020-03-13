@@ -47,7 +47,7 @@ library
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -pgmPcpphs -optP--cpp -fno-warn-name-shadowing
+                       -pgmP "cpphs --cpp" -fno-warn-name-shadowing
                        -fwarn-missing-signatures -O2
 
 benchmark large-hashable-benchmark
@@ -60,7 +60,7 @@ benchmark large-hashable-benchmark
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
+                       -pgmP "cpphs --cpp" -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures -fno-warn-name-shadowing -O2
   build-depends:       base >= 4.8 && < 5
                      , base16-bytestring
@@ -98,7 +98,7 @@ test-suite large-hashable-test
   ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -pgmPcpphs -optP--cpp -rtsopts -threaded -funbox-strict-fields
+                       -pgmP "cpphs --cpp" -rtsopts -threaded -funbox-strict-fields
                        -fwarn-missing-signatures -fno-warn-name-shadowing
   default-language:    Haskell2010
   other-modules:       Data.LargeHashable.Tests.Class
