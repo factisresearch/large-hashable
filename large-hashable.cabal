@@ -13,7 +13,6 @@ build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
     cbits/md5.h
-    cbits/bitfn.h
     README.md
     ChangeLog
     default.nix
@@ -22,7 +21,6 @@ extra-source-files:
 library
   hs-source-dirs:      src
   c-sources:           cbits/md5.c
-  extra-libraries:     stdc++
   exposed-modules:     Data.LargeHashable
                      , Data.LargeHashable.Class
                      , Data.LargeHashable.MD5
@@ -31,17 +29,19 @@ library
                      , Data.LargeHashable.TH
   build-depends:       aeson
                      , base >= 4.8 && < 5
-                     , text
-                     , bytestring
-                     , transformers
                      , base16-bytestring
                      , bytes
+                     , bytestring
                      , containers
-                     , unordered-containers
+                     , cryptonite
+                     , memory
                      , scientific
                      , strict
-                     , time
                      , template-haskell
+                     , text
+                     , time
+                     , transformers
+                     , unordered-containers
                      , utf8-light
                      , vector
                      , void
