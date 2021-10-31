@@ -1,6 +1,7 @@
 -- | An implementation of 'HashAlgorithm' for MD5 (https://www.ietf.org/rfc/rfc1321.txt).
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CApiFFI #-}
 module Data.LargeHashable.MD5 (
 
     MD5Hash(..), md5HashAlgorithm, runMD5
@@ -24,25 +25,25 @@ instance Show MD5Hash where
     show (MD5Hash w) =
         BSC.unpack (Base16.encode (w128ToBs w))
 
-foreign import ccall unsafe "md5.h md5_init"
+foreign import capi unsafe "md5.h md5_init"
     c_md5_init :: Ptr RawCtx -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update"
+foreign import capi unsafe "md5.h md5_update"
     c_md5_update :: Ptr RawCtx -> Ptr Word8 -> Int -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update_uchar"
+foreign import capi unsafe "md5.h md5_update_uchar"
     c_md5_update_uchar :: Ptr RawCtx -> Word8 -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update_ushort"
+foreign import capi unsafe "md5.h md5_update_ushort"
     c_md5_update_ushort :: Ptr RawCtx -> Word16 -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update_uint"
+foreign import capi unsafe "md5.h md5_update_uint"
     c_md5_update_uint :: Ptr RawCtx -> Word32 -> IO ()
 
-foreign import ccall unsafe "md5.h md5_update_ulong"
+foreign import capi unsafe "md5.h md5_update_ulong"
     c_md5_update_ulong :: Ptr RawCtx -> Word64 -> IO ()
 
-foreign import ccall unsafe "md5.h md5_finalize"
+foreign import capi unsafe "md5.h md5_finalize"
     c_md5_finalize :: Ptr RawCtx -> Ptr Word8 -> IO ()
 
 {-# INLINE digestSize #-}
