@@ -50,6 +50,11 @@ library
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -fno-warn-name-shadowing
                        -fwarn-missing-signatures -O2
+  if os(darwin)
+    extra-libraries: c++
+   else
+    extra-libraries: stdc++
+
 
 benchmark large-hashable-benchmark
   type:                exitcode-stdio-1.0
