@@ -48,7 +48,7 @@ library
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -pgmP "cpphs --cpp" -fno-warn-name-shadowing
+                       -fno-warn-name-shadowing
                        -fwarn-missing-signatures -O2
 
 benchmark large-hashable-benchmark
