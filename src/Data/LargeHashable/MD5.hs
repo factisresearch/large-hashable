@@ -9,6 +9,7 @@ module Data.LargeHashable.MD5 (
 ) where
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
+import Data.ByteArray
 import Data.LargeHashable.Intern
 import Data.LargeHashable.LargeWord
 import Data.Word
@@ -17,6 +18,9 @@ import Foreign.Ptr
 import Foreign.Storable
 import qualified Data.ByteString.Base16 as Base16
 import qualified Data.ByteString.Char8 as BSC
+import Crypto.Hash (Context, Digest)
+import Crypto.Hash.IO (hashInternalUpdate, hashMutableInit, hashMutableFinalize)
+import qualified Crypto.Hash.Algorithms as Algorithms
 
 newtype MD5Hash = MD5Hash { unMD5Hash :: Word128 }
     deriving (Eq, Ord)
@@ -25,51 +29,24 @@ instance Show MD5Hash where
     show (MD5Hash w) =
         BSC.unpack (Base16.encode (w128ToBs w))
 
-foreign import capi unsafe "md5.h md5_init"
-    c_md5_init :: Ptr RawCtx -> IO ()
+data Ctx a = Ctx { rawCtx :: Ptr (Context a), buf :: Ptr Word8 }
 
-foreign import capi unsafe "md5.h md5_update"
-    c_md5_update :: Ptr RawCtx -> Ptr Word8 -> Int -> IO ()
+withCtx' :: Algorithms.HashAlgorithm a => a -> (Ctx a -> IO ()) -> IO (Digest a)
+withCtx' alg f =
+    -- Allocate a scratch buffer to use for updating individual fields
+    allocaBytes 64 $ \(buf :: Ptr Word8) -> do
+    ctx <- hashMutableInit
+    withByteArray ctx $ \rawCtx ->
+        f (Ctx rawCtx buf)
+    hashMutableFinalize ctx
 
-foreign import capi unsafe "md5.h md5_update_uchar"
-    c_md5_update_uchar :: Ptr RawCtx -> Word8 -> IO ()
-
-foreign import capi unsafe "md5.h md5_update_ushort"
-    c_md5_update_ushort :: Ptr RawCtx -> Word16 -> IO ()
-
-foreign import capi unsafe "md5.h md5_update_uint"
-    c_md5_update_uint :: Ptr RawCtx -> Word32 -> IO ()
-
-foreign import capi unsafe "md5.h md5_update_ulong"
-    c_md5_update_ulong :: Ptr RawCtx -> Word64 -> IO ()
-
-foreign import capi unsafe "md5.h md5_finalize"
-    c_md5_finalize :: Ptr RawCtx -> Ptr Word8 -> IO ()
-
-{-# INLINE digestSize #-}
-digestSize :: Int
-digestSize = 16
-
-{-# INLINE sizeCtx #-}
-sizeCtx :: Int
-sizeCtx = 96
-
-data RawCtx -- phantom type argument
-
-newtype Ctx = Ctx { _unCtx :: Ptr RawCtx }
-
-withCtx :: (Ctx -> IO ()) -> IO MD5Hash
-withCtx f =
-    allocaBytes sizeCtx $ \(ptr :: Ptr RawCtx) ->
-    do c_md5_init ptr
-       f (Ctx ptr)
-       allocaBytes digestSize $ \(resPtr :: Ptr Word8) ->
-           do c_md5_finalize ptr resPtr
-              let first = castPtr resPtr :: Ptr Word64
-              w1 <- peek first
-              let second = castPtr (plusPtr resPtr (sizeOf w1)) :: Ptr Word64
-              w2 <- peek second
-              return (MD5Hash (Word128 w1 w2))
+withCtx :: (Ctx Algorithms.MD5 -> IO ()) -> IO MD5Hash
+withCtx f = do
+    rawDigest <- withCtx' Algorithms.MD5 f
+    withByteArray rawDigest $ \(resPtr :: Ptr Word64) -> do
+        w1 <- peek resPtr
+        w2 <- peekByteOff resPtr (sizeOf w1)
+        return (MD5Hash (Word128 w1 w2))
 
 md5HashAlgorithm :: HashAlgorithm MD5Hash
 md5HashAlgorithm =
@@ -85,14 +62,19 @@ md5HashAlgorithm =
           in do f (w128_first h)
                 f (w128_second h)
       run f =
-          withCtx $ \(Ctx ctxPtr) ->
-              let !updates =
+          withCtx $ \(Ctx ctxPtr buf) ->
+              let updatePtr ptr len = hashInternalUpdate ctxPtr ptr (fromIntegral len)
+                  updatePrimitive :: Storable w => w -> IO ()
+                  updatePrimitive w = do
+                    poke (castPtr buf) w
+                    updatePtr buf (sizeOf w)
+                  !updates =
                       HashUpdates
-                      { hu_updatePtr = c_md5_update ctxPtr
-                      , hu_updateUChar = c_md5_update_uchar ctxPtr
-                      , hu_updateUShort = c_md5_update_ushort ctxPtr
-                      , hu_updateUInt = c_md5_update_uint ctxPtr
-                      , hu_updateULong = c_md5_update_ulong ctxPtr
+                      { hu_updatePtr = updatePtr
+                      , hu_updateUChar = updatePrimitive
+                      , hu_updateUShort = updatePrimitive
+                      , hu_updateUInt = updatePrimitive
+                      , hu_updateULong = updatePrimitive
                       }
               in f updates
 

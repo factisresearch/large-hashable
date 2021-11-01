@@ -12,7 +12,6 @@ category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:
-    cbits/md5.h
     README.md
     ChangeLog
     default.nix
@@ -20,7 +19,6 @@ extra-source-files:
 
 library
   hs-source-dirs:      src
-  include-dirs: cbits
   exposed-modules:     Data.LargeHashable
                      , Data.LargeHashable.Class
                      , Data.LargeHashable.MD5
