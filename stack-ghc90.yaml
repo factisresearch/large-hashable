@@ -1,0 +1,7 @@
+resolver: nightly-2021-10-29
+require-stack-version: ">= 1.0.0"
+
+packages:
+- '.'
+
+flags: {}

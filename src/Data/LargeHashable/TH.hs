@@ -154,7 +154,11 @@ notDeriveAbleErrorMsg name info = "Could not derive LargeHashable instance for "
 
 -- | After 'deriveLargeHashable' has matched all the important information
 --   this function gets called to build the instance declaration.
+#if MIN_VERSION_template_haskell(2,17,0)
+buildInstance :: Type -> Cxt -> [TyVarBndr f] -> [Con] ->  Q [Dec]
+#else
 buildInstance :: Type -> Cxt -> [TyVarBndr] -> [Con] ->  Q [Dec]
+#endif
 buildInstance basicType context vars cons =
     let consWithIds = zip [0..] cons
         constraints = makeConstraints context vars
@@ -217,21 +221,40 @@ sequenceExps first second = infixE (Just first) (varE '(>>)) (Just second)
 --   the 'LargeHashable' class. This means that the constraint
 --   @LargeHashable $TypeVar$@ is added for every type variable
 --   the type has.
+#if MIN_VERSION_template_haskell(2,17,0)
+makeConstraints :: Cxt -> [TyVarBndr f] -> Q Cxt
+#else
 makeConstraints :: Cxt -> [TyVarBndr] -> Q Cxt
+#endif
 makeConstraints context vars = return $ context ++
     map (\v -> (ConT (toLargeHashableClass v)) `AppT` (VarT . varName $ v)) vars
     where
+#if MIN_VERSION_template_haskell(2,17,0)
+      toLargeHashableClass :: TyVarBndr f -> Name
+      toLargeHashableClass var =
+        case var of
+          (PlainTV _ _) -> ''LargeHashable
+          (KindedTV _ _ (AppT (AppT ArrowT StarT) StarT)) -> ''LargeHashable'
+          (KindedTV _ _ _) -> ''LargeHashable
+#else
       toLargeHashableClass :: TyVarBndr -> Name
       toLargeHashableClass var =
         case var of
           (PlainTV _) -> ''LargeHashable
           (KindedTV _ (AppT (AppT ArrowT StarT) StarT)) -> ''LargeHashable'
           (KindedTV _ _) -> ''LargeHashable
+#endif
 
 -- | Returns the 'Name' for a type variable.
+#if MIN_VERSION_template_haskell(2,17,0)
+varName :: TyVarBndr f -> Name
+varName (PlainTV n _) = n
+varName (KindedTV n _ _) = n
+#else
 varName :: TyVarBndr -> Name
 varName (PlainTV n) = n
 varName (KindedTV n _) = n
+#endif
 
 -- | An infinite list of unique names that
 --   are used in the generations of patterns.
