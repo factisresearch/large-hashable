@@ -1,6 +1,7 @@
 -- | This module defines the central type class `LargeHashable` of this package.
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -30,6 +31,10 @@ import Foreign.Ptr
 import GHC.Generics
 import qualified Codec.Binary.UTF8.Light as Utf8
 import qualified Data.Aeson as J
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KeyMap
+#endif
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
@@ -352,6 +357,22 @@ updateHashHashMap !m =
 -- Lazy and Strict HashMap share the same definition
 instance (LargeHashable k, LargeHashable v) => LargeHashable (HashMap.HashMap k v) where
     updateHash = updateHashHashMap
+
+#if MIN_VERSION_aeson(2,0,0)
+{-# INLINE updateHashKey #-}
+updateHashKey :: Key.Key -> LH ()
+updateHashKey !k = updateHash $ Key.toText k
+
+instance LargeHashable Key.Key where
+  updateHash = updateHashKey
+
+updateHashKeyMap :: LargeHashable a => KeyMap.KeyMap a -> LH ()
+updateHashKeyMap !m =
+    hashListModuloOrdering (KeyMap.size m) (KeyMap.toList m)
+
+instance LargeHashable a => LargeHashable (KeyMap.KeyMap a) where
+    updateHash = updateHashKeyMap
+#endif
 
 {-# INLINE updateHashTuple #-}
 updateHashTuple :: (LargeHashable a, LargeHashable b) => (a, b) -> LH ()

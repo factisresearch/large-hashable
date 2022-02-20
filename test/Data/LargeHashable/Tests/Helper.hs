@@ -15,18 +15,21 @@ import Data.Time.Clock.TAI
 import Data.Time.LocalTime
 import GHC.Generics
 import Test.QuickCheck
-import qualified Data.Aeson as J
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Short as BS
 import qualified Data.HashMap.Lazy as HML
-import qualified Data.HashMap.Strict as HM
 import qualified Data.HashSet as HS
 import qualified Data.Scientific as Sci
 import qualified Data.Strict.Tuple as Tuple
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Vector as V
+
+#if !MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson as J
+import qualified Data.HashMap.Strict as HM
+#endif
 
 #if !MIN_VERSION_QuickCheck(2,8,2)
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
@@ -61,6 +64,7 @@ instance Arbitrary Sci.Scientific where
         liftM2 Sci.scientific arbitrary arbitrary
     shrink = shrinkRealFrac
 
+#if !MIN_VERSION_aeson(2,0,0)
 instance Arbitrary J.Value where
     arbitrary = sized arbitraryJsonValue
         where
@@ -103,6 +107,7 @@ instance Arbitrary J.Value where
               map J.Number (shrink n)
           J.Bool _ -> []
           J.Null -> []
+#endif
 
 instance (Eq k, Hashable k, Arbitrary k, Arbitrary a) => Arbitrary (HML.HashMap k a) where
     arbitrary = fmap HML.fromList arbitrary
