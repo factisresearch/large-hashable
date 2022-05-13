@@ -1,5 +1,6 @@
 -- | This module defines the central type class `LargeHashable` of this package.
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -30,6 +31,10 @@ import Foreign.Ptr
 import GHC.Generics
 import qualified Codec.Binary.UTF8.Light as Utf8
 import qualified Data.Aeson as J
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.Key as AesonKey
+import qualified Data.Aeson.KeyMap as AesonKeyMap
+#endif
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Internal as BLI
@@ -472,6 +477,14 @@ instance LargeHashable J.Value where
                  updateHash b
           J.Null ->
               updateHash (5::Int)
+
+#if MIN_VERSION_aeson(2,0,0)
+instance LargeHashable J.Key where
+    updateHash = updateHash . AesonKey.toText
+
+instance LargeHashable v => LargeHashable (AesonKeyMap.KeyMap v) where
+    updateHash v = updateHash (AesonKeyMap.toHashMap v)
+#endif
 
 instance LargeHashable Void where
     updateHash _ = error "I'm void"
