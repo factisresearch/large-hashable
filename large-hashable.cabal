@@ -42,7 +42,6 @@ library
                      , time
                      , transformers
                      , unordered-containers
-                     , utf8-light
                      , vector
                      , void
   default-language:    Haskell2010

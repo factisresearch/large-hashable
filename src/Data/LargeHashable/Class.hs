@@ -17,6 +17,7 @@ module Data.LargeHashable.Class (
 
 -- keep imports in alphabetic order (in Emacs, use "M-x sort-lines")
 import Data.Bits
+import Data.Char (ord)
 import Data.Fixed
 import Data.Foldable
 import Data.Int
@@ -29,7 +30,6 @@ import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
 import GHC.Generics
-import qualified Codec.Binary.UTF8.Light as Utf8
 import qualified Data.Aeson as J
 #if MIN_VERSION_aeson(2,0,0)
 import qualified Data.Aeson.Key as AesonKey
@@ -226,7 +226,11 @@ instance LargeHashable CULong where
     updateHash (CULong w) = updateHashWithFun hu_updateULong (fromIntegral w)
 
 instance LargeHashable Char where
-    updateHash = updateHashWithFun hu_updateUInt . Utf8.c2w
+    updateHash = updateHashWithFun hu_updateUInt . c2w
+
+c2w :: Char -> Word32
+{-# INLINE c2w #-}
+c2w c = toEnum (ord c :: Int)
 
 {-# INLINE updateHashInteger #-}
 updateHashInteger :: Integer -> LH ()
