@@ -18,6 +18,8 @@ env:
 - LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc84.yaml"
 - LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc86.yaml"
 - LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc88.yaml"
+- LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc90.yaml"
+- LH_TRAVIS_STACK_ARGS="--stack-yaml stack-ghc92.yaml"
 
 before_install:
 - mkdir -p ~/.local/bin
