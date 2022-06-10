@@ -61,6 +61,7 @@ instance Arbitrary Sci.Scientific where
         liftM2 Sci.scientific arbitrary arbitrary
     shrink = shrinkRealFrac
 
+#if !MIN_VERSION_aeson(2,0,0)
 instance Arbitrary J.Value where
     arbitrary = sized arbitraryJsonValue
         where
@@ -103,6 +104,7 @@ instance Arbitrary J.Value where
               map J.Number (shrink n)
           J.Bool _ -> []
           J.Null -> []
+#endif
 
 instance (Eq k, Hashable k, Arbitrary k, Arbitrary a) => Arbitrary (HML.HashMap k a) where
     arbitrary = fmap HML.fromList arbitrary

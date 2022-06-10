@@ -193,7 +193,11 @@ updateHashClause mI con =
           -- Extract the names of all the
           -- pattern variables from usedPat.
           patVarNames = case patOfClause of
+#if MIN_VERSION_template_haskell(2,18,0)
+                          ConP _ _ vars -> map (\(VarP v) -> v) vars
+#else
                           ConP _ vars -> map (\(VarP v) -> v) vars
+#endif
                           InfixP (VarP v1) _ (VarP v2) -> [v1, v2]
                           _ -> error "Pattern in patVarNames not matched!"
           patOfClause = patternForCon con
@@ -202,16 +206,24 @@ updateHashClause mI con =
 --   and all of its fields.
 patternForCon :: Con -> Pat
 patternForCon con = case con of
-              NormalC n types -> ConP n $ uniqueVarPats (length types)
-              RecC n varTypes -> ConP n $ uniqueVarPats (length varTypes)
+              NormalC n types -> conP n $ uniqueVarPats (length types)
+              RecC n varTypes -> conP n $ uniqueVarPats (length varTypes)
               InfixC _ n _ -> InfixP (VarP . mkName $ "x") n (VarP . mkName $ "y")
               c@(ForallC{}) -> error $ "Cannot derive quantified type as it would potentially violate uniqueness: "++ show c
 #if MIN_VERSION_template_haskell(2,11,0)
-              GadtC [n] types _ -> ConP n $ uniqueVarPats (length types)
-              RecGadtC [n] varTypes _ -> ConP n $ uniqueVarPats (length varTypes)
+              GadtC [n] types _ -> conP n $ uniqueVarPats (length types)
+              RecGadtC [n] varTypes _ -> conP n $ uniqueVarPats (length varTypes)
               _ -> error $ "Constructor not supported: "++show con
 #endif
-    where uniqueVarPats n = take n . map (VarP . mkName) $ names
+    where
+        uniqueVarPats n = take n . map (VarP . mkName) $ names
+        conP n =
+#if MIN_VERSION_template_haskell(2,18,0)
+            ConP n []
+#else
+            ConP n
+#endif
+
 
 -- | Sequences two Expressions using the '(>>)' operator.
 sequenceExps :: Q Exp -> Q Exp -> Q Exp
