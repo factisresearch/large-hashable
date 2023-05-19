@@ -90,11 +90,10 @@ instance Functor LH where
 instance Applicative LH where
     pure = lhReturn
     (<*>) = lhApp
+    (*>) = lhBind'
 
 instance Monad LH where
-    return = lhReturn
     (>>=) = lhBind
-    (>>) = lhBind'
 
 {-# INLINE hashUpdates #-}
 hashUpdates :: LH HashUpdates
