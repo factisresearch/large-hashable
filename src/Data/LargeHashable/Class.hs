@@ -110,8 +110,14 @@ updateHashTextData :: T.Text -> LH ()
 updateHashTextData !t = do
     updates <- hashUpdates
     ioInLH $ do
-        TF.useAsPtr t $ \valPtr units ->
+#if MIN_VERSION_text(2,0,0)
+        TF.useAsPtr t $ \(valPtr :: Ptr Word8) (units :: TF.I8) ->
+            hu_updatePtr updates (castPtr valPtr) (fromIntegral units)
+#else
+        -- UTF-16 encoding
+        TF.useAsPtr t $ \(valPtr :: Ptr Word16) (units :: TF.I16) ->
             hu_updatePtr updates (castPtr valPtr) (fromIntegral (2 * units))
+#endif
         return ()
 
 {-# INLINE updateHashText #-}
