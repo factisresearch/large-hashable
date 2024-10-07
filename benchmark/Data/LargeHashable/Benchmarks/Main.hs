@@ -17,6 +17,7 @@ import qualified Data.LargeHashable.Class as LH
 import qualified Data.LargeHashable.Intern as LH
 import qualified Data.LargeHashable.Benchmarks.CryptoHash as CH
 import qualified Data.LargeHashable.Benchmarks.Serial as Serial
+import qualified Data.LargeHashable.Benchmarks.Text as TextBench
 import qualified Data.Text as T
 
 data Patient
@@ -72,12 +73,19 @@ main :: IO ()
 main =
     defaultMain
     [ env (return patList) $ \l ->
-        bgroup "patList" $
+        bgroup "patList"
         [ bench "safecopy" $ whnf (CH.hashMd5 . runPut . safePut) l
         , bench "cryptohash" $ whnf CH.hashMd5 l
         , bench "large-hashable (Manual)" $ whnf (LH.runLH LH.md5HashAlgorithm . LH.updateHashList updateHashPatient) l
         , bench "large-hashable (TH)" $ whnf (LH.largeHash LH.md5HashAlgorithm) l
         , bench "large-hashable (Generic)" $ whnf (LH.runLH LH.md5HashAlgorithm . LH.genericUpdateHash) l
         , bench "large-hashable-serial (TH)" $ whnf (Serial.serialLargeHash LH.md5HashAlgorithm) l
+        ]
+    , env TextBench.setup $ \ ~(text, string) ->
+        bgroup "text"
+        [ bench "text-utf8" $ whnf TextBench.benchTextUtf8 text
+        , bench "text-utf16" $ whnf TextBench.benchTextUtf16 text
+        , bench "text-unicode" $ whnf TextBench.benchTextUnicode text
+        , bench "string" $ whnf TextBench.benchTextString string
         ]
     ]

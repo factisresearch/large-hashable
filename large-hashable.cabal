@@ -17,6 +17,7 @@ extra-source-files:
     ChangeLog
     default.nix
     stack.yaml
+    test/bigfile.txt
 
 library
   hs-source-dirs:      src
