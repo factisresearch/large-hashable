@@ -1,4 +1,4 @@
-resolver: nightly-2023-05-08
+resolver: lts-21.26
 require-stack-version: ">= 1.0.0"
 
 packages:
