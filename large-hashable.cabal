@@ -1,5 +1,5 @@
 name:                large-hashable
-version:             0.1.0.5
+version:             0.1.1.0
 synopsis:            Efficiently hash (large) Haskell values
 description:         Please see README.md
 homepage:            https://github.com/factisresearch/large-hashable
