@@ -1,0 +1,11 @@
+{
+    "haskell.checkProject": false,
+    "haskell.checkParents": false,
+    "haskell.trace.client": "info",
+    "haskell.openDocumentationInHackage": true,
+    "haskell.openSourceInHackage": true,
+    "haskell.sessionLoading": "multipleComponents",
+    "haskell.plugin.hlint.codeActionsOn": false,
+    "haskell.plugin.hlint.diagnosticsOn": false,
+    "haskell.plugin.semanticTokens.globalOn": true
+}
