@@ -15,12 +15,10 @@ import Data.Time.Clock.TAI
 import Data.Time.LocalTime
 import GHC.Generics
 import Test.QuickCheck
-import qualified Data.Aeson as J
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Short as BS
 import qualified Data.HashMap.Lazy as HML
-import qualified Data.HashMap.Strict as HM
 import qualified Data.HashSet as HS
 import qualified Data.Scientific as Sci
 import qualified Data.Strict.Tuple as Tuple

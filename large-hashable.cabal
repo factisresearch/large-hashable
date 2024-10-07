@@ -28,6 +28,7 @@ library
                      , Data.LargeHashable.Intern
                      , Data.LargeHashable.LargeWord
                      , Data.LargeHashable.TH
+  other-modules:       Data.LargeHashable.Endianness
   build-depends:       aeson
                      , base >= 4.8 && < 5
                      , base16-bytestring
@@ -46,7 +47,7 @@ library
                      , vector
                      , void
   default-language:    Haskell2010
-  ghc-options:         -optc -O3 -fno-cse -W -fwarn-unused-imports -fwarn-unused-binds
+  ghc-options:         -optc -O3 -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -fno-warn-name-shadowing
                        -fwarn-missing-signatures -O2
@@ -58,7 +59,8 @@ benchmark large-hashable-benchmark
   other-modules:       Data.LargeHashable.Benchmarks.CryptoHash
                      , Data.LargeHashable.Benchmarks.Main
                      , Data.LargeHashable.Benchmarks.Serial
-  ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
+                     , Data.LargeHashable.Benchmarks.Text
+  ghc-options:         -optc -O3 -threaded -rtsopts -with-rtsopts=-N
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmP "cpphs --cpp" -rtsopts -threaded -funbox-strict-fields
@@ -98,7 +100,7 @@ test-suite large-hashable-test
                      , unordered-containers
                      , vector
                      , inspection-testing
-  ghc-options:         -optc -O3 -fno-cse -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:         -optc -O3 -threaded -rtsopts -with-rtsopts=-N
                        -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
                        -pgmP "cpphs --cpp" -rtsopts -threaded -funbox-strict-fields
@@ -109,6 +111,8 @@ test-suite large-hashable-test
                      , Data.LargeHashable.Tests.Inspection
                      , Data.LargeHashable.Tests.TH
                      , Data.LargeHashable.Tests.LargeWord
+                     , Data.LargeHashable.Tests.MD5
+                     , Data.LargeHashable.Tests.Stable
 
 source-repository head
   type:     git

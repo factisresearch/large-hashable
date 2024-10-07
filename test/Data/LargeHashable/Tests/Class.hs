@@ -141,6 +141,12 @@ prop_appendLazyTextOk t1 t2 =
     runMD5 (updateHash (t1 `TL.append` t2)) /=
     runMD5 (updateHash t1 >> updateHash t2)
 
+prop_lazyStrictTextSame :: [T.Text] -> Bool
+prop_lazyStrictTextSame chunks =
+    let lazy = TL.fromChunks chunks
+        strict = mconcat chunks
+    in runMD5 (updateHash lazy) == runMD5 (updateHash strict)
+
 prop_listUniqueness :: [Bool] -> [Bool] -> Bool
 prop_listUniqueness = generic_uniquenessProp
 
@@ -200,6 +206,7 @@ instance Hashable ConstHash where
 
 instance LargeHashable ConstHash where
     updateHash (ConstHash i) = updateHash i
+    updateHashStable (ConstHash i) = updateHashStable i
 
 test_hashHashSet :: IO ()
 test_hashHashSet =
