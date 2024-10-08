@@ -1,0 +1,10 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "large-hashable:lib"
+
+    - path: "./benchmark"
+      component: "large-hashable:bench:large-hashable-benchmark"
+
+    - path: "./test"
+      component: "large-hashable:test:large-hashable-test"

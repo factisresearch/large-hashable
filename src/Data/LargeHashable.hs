@@ -9,6 +9,7 @@ module Data.LargeHashable (
  , LH
  , HashAlgorithm
  , largeHash
+ , largeHashStable
  , deriveLargeHashable
  , deriveLargeHashableNoCtx
  , deriveLargeHashableCtx

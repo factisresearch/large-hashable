@@ -164,22 +164,26 @@ buildInstance basicType context vars cons =
         constraints = makeConstraints context vars
         typeWithVars = foldl appT (return basicType) $ map (varT . varName) vars
       in (:[]) <$> instanceD constraints (conT ''LargeHashable `appT` typeWithVars)
-            [updateHashDeclaration consWithIds]
+            [updateHashDeclaration 'updateHash consWithIds,
+             updateHashDeclaration 'updateHashStable consWithIds]
 
--- | This function generates the declaration for the 'updateHash' function
+-- | This function generates the declaration for the 'updateHash' and the
+--   'updateHashStable functions
 --   of the 'LargeHashable' typeclass. By taking the constructors with there
 --   selected IDs and calling 'updateHashClause' for everyone of them to generate
 --   the corresponding clause.
-updateHashDeclaration :: [(Integer, Con)] -> Q Dec
-updateHashDeclaration [(_, con)] = funD 'updateHash [updateHashClause Nothing con]
-updateHashDeclaration consWIds = funD 'updateHash (map (uncurry updateHashClause . first Just) consWIds)
+updateHashDeclaration :: Name -> [(Integer, Con)] -> Q Dec
+updateHashDeclaration name [(_, con)] =
+    funD name [updateHashClause name Nothing con]
+updateHashDeclaration name consWIds =
+    funD name (map (uncurry (updateHashClause name) . first Just) consWIds)
 
 -- | 'updateHashClause' generates a clause of the 'updateHash' function.
 --   It makes sure all the fields are matched correctly and updates the hash
 --   with the neccessary information about the constructor (its ID) and all
 --   of its fields.
-updateHashClause :: Maybe Integer -> Con -> Q Clause
-updateHashClause mI con =
+updateHashClause :: Name -> Maybe Integer -> Con -> Q Clause
+updateHashClause name mI con =
         clause [return patOfClause]
             (normalB $
                 foldl sequenceExps
@@ -189,7 +193,7 @@ updateHashClause mI con =
     where conMarker = case mI of
                         Just i -> [| updateHash ($(litE . IntegerL $ i) :: Word64) |]
                         Nothing -> [| return () |]
-          hashUpdatesOfConFields = map (\name -> [| updateHash $(varE name) |]) patVarNames
+          hashUpdatesOfConFields = map (\pn -> [| $(varE name) $(varE pn) |]) patVarNames
           -- Extract the names of all the
           -- pattern variables from usedPat.
           patVarNames = case patOfClause of

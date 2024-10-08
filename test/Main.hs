@@ -7,6 +7,8 @@ import Test.Framework
 import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.Class
 import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.Inspection
 import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.LargeWord
+import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.MD5
+import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.Stable
 import {-@ HTF_TESTS @-} Data.LargeHashable.Tests.TH
 
 allTests :: [TestSuite]

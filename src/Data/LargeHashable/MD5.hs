@@ -25,6 +25,19 @@ instance Show MD5Hash where
     show (MD5Hash w) =
         BSC.unpack (Base16.encode (w128ToBs w))
 
+instance Read MD5Hash where
+    -- readsPrec :: Read a => Int -> String -> [(a, String)]
+    readsPrec _ s =
+        let n = 32
+            (prefix, suffix) = splitAt n s
+        in
+            if length prefix /= n
+                then []
+                else
+                    case Base16.decode (BSC.pack prefix) of
+                        Left _ -> []
+                        Right bs -> [(MD5Hash (bsToW128 bs), suffix)]
+
 foreign import capi unsafe "md5.h md5_init"
     c_md5_init :: Ptr RawCtx -> IO ()
 
