@@ -6,8 +6,8 @@ homepage:            https://github.com/factisresearch/large-hashable
 license:             BSD3
 license-file:        LICENSE
 author:              Stefan Wehr, Lukas Epple
-maintainer:          Stefan Wehr <wehr@cp-med.com>
-copyright:           2015 - 2017 factis research GmbH
+maintainer:          Stefan Wehr
+copyright:           2015 - 2017 factis research GmbH, 2018 - 2023 medilyse GmbH, 2024 MEQO GmbH
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
