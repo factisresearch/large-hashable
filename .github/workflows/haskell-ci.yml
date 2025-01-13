@@ -1,9 +1,10 @@
 name: Haskell-CI
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
+  workflow_dispatch:
 jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
