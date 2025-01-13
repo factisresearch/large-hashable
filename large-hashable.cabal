@@ -18,7 +18,6 @@ extra-source-files:
     default.nix
     stack.yaml
     test/bigfile.txt
-    stack-ghc-9.0.yaml
     stack-ghc-9.2.yaml
     stack-ghc-9.4.yaml
     stack-ghc-9.6.yaml
