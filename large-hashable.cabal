@@ -35,7 +35,7 @@ library
                      , bytes
                      , bytestring
                      , containers
-                     , cryptonite
+                     , crypton
                      , memory
                      , scientific
                      , strict
