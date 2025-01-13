@@ -21,7 +21,6 @@ jobs:
           - compiler: ghc-9.6
           - compiler: ghc-9.4
           - compiler: ghc-9.2
-          - compiler: ghc-9.0
       fail-fast: false
     steps:
       - name: Set PATH and environment variables
