@@ -1,0 +1,7 @@
+resolver: lts-23.4
+require-stack-version: ">= 1.0.0"
+
+packages:
+- '.'
+
+flags: {}
