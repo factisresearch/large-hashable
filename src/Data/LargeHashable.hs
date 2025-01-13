@@ -2,7 +2,7 @@
 --   for efficiently hashing any Haskell data type using a
 --   hash algorithm like MD5, SHA256 etc.
 --
---   Normal users shoud import this module.
+--   Normal users should import this module.
 module Data.LargeHashable (
    LargeHashable(..)
  , LargeHashable'(..)
