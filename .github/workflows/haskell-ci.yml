@@ -1,9 +1,10 @@
 name: Haskell-CI
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
+  workflow_dispatch:
 jobs:
   linux:
     name: Haskell-CI - Linux - ${{ matrix.compiler }}
@@ -20,11 +21,6 @@ jobs:
           - compiler: ghc-9.4
           - compiler: ghc-9.2
           - compiler: ghc-9.0
-          - compiler: ghc-8.8
-          - compiler: ghc-8.6
-          - compiler: ghc-8.4
-          - compiler: ghc-8.2
-          - compiler: ghc-8.0
       fail-fast: false
     steps:
       - name: Set PATH and environment variables

@@ -16,3 +16,4 @@ cabal.sandbox.config
 *.hp
 .HTF/
 .stack-work/
+dist-newstyle/
