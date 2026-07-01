@@ -1,5 +1,5 @@
 name:                large-hashable
-version:             0.1.2.0
+version:             0.1.3.0
 synopsis:            Efficiently hash (large) Haskell values
 description:         Please see README.md
 homepage:            https://github.com/factisresearch/large-hashable
@@ -7,7 +7,8 @@ license:             BSD3
 license-file:        LICENSE
 author:              Stefan Wehr, Lukas Epple
 maintainer:          Stefan Wehr
-copyright:           2015 - 2017 factis research GmbH, 2018 - 2023 medilyse GmbH, 2024 - 2025 MEQO GmbH
+copyright:           2015 - 2017 factis research GmbH, 2018 - 2023 medilyse GmbH,
+                     2024 - 2026 MEQO GmbH
 category:            Web
 build-type:          Simple
 cabal-version:       2.0
@@ -18,10 +19,9 @@ extra-source-files:
     default.nix
     stack.yaml
     test/bigfile.txt
-    stack-ghc-9.2.yaml
-    stack-ghc-9.4.yaml
     stack-ghc-9.6.yaml
     stack-ghc-9.8.yaml
+    stack-ghc-9.10.yaml
 
 library
   hs-source-dirs:      src
@@ -36,25 +36,20 @@ library
   build-depends:       aeson
                      , base >= 4.8 && < 5
                      , base16-bytestring
-                     , bytes
                      , bytestring
                      , containers
-                     , crypton
-                     , memory
                      , scientific
                      , strict
                      , template-haskell
                      , text
                      , time
-                     , transformers
                      , unordered-containers
                      , vector
-                     , void
   build-tool-depends:  cpphs:cpphs
   default-language:    Haskell2010
   ghc-options:         -optc -O3 -W -fwarn-unused-imports -fwarn-unused-binds
                        -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-wrong-do-bind
-                       -fno-warn-name-shadowing
+                       -fno-warn-name-shadowing -Wunused-packages
                        -fwarn-missing-signatures -O2
 
 benchmark large-hashable-benchmark

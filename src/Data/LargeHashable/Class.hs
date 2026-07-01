@@ -31,6 +31,7 @@ import Data.Void (Void)
 import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
+import GHC.Float (castDoubleToWord64, castFloatToWord32)
 import GHC.Generics
 import qualified Data.Aeson as J
 #if MIN_VERSION_aeson(2,0,0)
@@ -317,16 +318,12 @@ instance LargeHashable Integer where
     updateHash = updateHashInteger
     updateHashStable = updateHash
 
-foreign import ccall doubleToWord64 :: Double -> Word64
-
 instance LargeHashable Double where
-    updateHash = updateHash . doubleToWord64
+    updateHash = updateHash . castDoubleToWord64
     updateHashStable = updateHash
 
-foreign import ccall floatToWord32 :: Float -> Word32
-
 instance LargeHashable Float where
-    updateHash = updateHash . floatToWord32
+    updateHash = updateHash . castFloatToWord32
     updateHashStable = updateHash
 
 {-# INLINE updateHashFixed #-}
