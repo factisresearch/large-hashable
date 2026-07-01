@@ -1,6 +1,6 @@
 # LargeHashable
 
-[![BuildStatus](https://github.com/factisresearch/large-hashable/actions/workflows/haskell-ci.yml/badge.svg?branch=master)](https://github.com/factisresearch/large-hashable/actions/workflows/haskell-ci.yml/badge.svg?branch=master)
+[![BuildStatus](https://github.com/factisresearch/large-hashable/actions/workflows/haskell-ci.yml/badge.svg?branch=master)](https://github.com/factisresearch/large-hashable/actions/workflows/haskell-ci.yml)
 [![Hackage](https://img.shields.io/hackage/v/large-hashable.svg)](http://hackage.haskell.org/package/large-hashable)
 
 Efficiently hash Haskell values with MD5, SHA256, SHA512 and other
