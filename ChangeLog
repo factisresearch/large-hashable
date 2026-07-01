@@ -1,3 +1,7 @@
+0.1.3.0: 2026-07-01
+	* drop unused dependencies (memory, bytes, crypton, transformers, void)
+	* replace C FFI float/double conversions with GHC.Float casts (identical hashes)
+
 0.1.2.0: 2025-01-13
 	* replace cryptonite (deprecated) with crypton
 
