@@ -18,10 +18,9 @@ extra-source-files:
     default.nix
     stack.yaml
     test/bigfile.txt
-    stack-ghc-9.2.yaml
-    stack-ghc-9.4.yaml
     stack-ghc-9.6.yaml
     stack-ghc-9.8.yaml
+    stack-ghc-9.10.yaml
 
 library
   hs-source-dirs:      src

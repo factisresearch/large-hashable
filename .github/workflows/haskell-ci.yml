@@ -17,10 +17,9 @@ jobs:
     strategy:
       matrix:
         include:
+          - compiler: ghc-9.10
           - compiler: ghc-9.8
           - compiler: ghc-9.6
-          - compiler: ghc-9.4
-          - compiler: ghc-9.2
       fail-fast: false
     steps:
       - name: Set PATH and environment variables
